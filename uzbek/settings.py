@@ -136,6 +136,8 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
+    # disabling south for now, doesn't work with python 3.3 and django 1.5
+    #'south',
     'proverbs',
 )
 
