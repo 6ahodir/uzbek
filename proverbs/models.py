@@ -7,7 +7,7 @@ class Proverb(models.Model):
     description = models.TextField()
 
     def __unicode__(self):
-        return self.text
+        return '%s' % self.text
 
 
 class ProverbScore(models.Model):
@@ -19,5 +19,5 @@ class ProverbScore(models.Model):
     correct_count = models.PositiveIntegerField()
 
     def __unicode__(self):
-        return "%s - %s - %d - %d" % (self.user.username, self.proverb[:20],
+        return '%s - %s - %d - %d' % (self.user.username, self.proverb[:20],
                                       self.view_count, self.correct_count)
