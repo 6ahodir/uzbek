@@ -1,8 +1,22 @@
 {% extends "./base.html" %}
+{% load staticfiles %}
 
 {% block page_title %}Proverbs - Home{% endblock %}
 
+{% block javascript %}
+    <script src="{% static "proverbs/js/models/proverb.js" %}"></script>
+    <script src="{% static "proverbs/js/collections/proverbs.js" %}"></script>
+    <script src="{% static "proverbs/js/views/proverb.js" %}"></script>
+    <script src="{% static "proverbs/js/views/app.js" %}"></script>
+    <script src="{% static "proverbs/js/routers/router.js" %}"></script>
+    <script src="{% static "proverbs/js/app.js" %}"></script>
+{% endblock %}
+
 {% block content %}
-index
+<ul>
+    {% for proverb in proverbs %}
+    <li>{{ proverb.text }}</li>
+    {% endfor %}
+</ul>
 {% endblock content %}
 
