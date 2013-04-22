@@ -112,10 +112,10 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'uzbek.urls'
+ROOT_URLCONF = 'project.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'uzbek.wsgi.application'
+WSGI_APPLICATION = 'project.wsgi.application'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or
@@ -138,7 +138,7 @@ INSTALLED_APPS = (
     'django.contrib.admindocs',
     # disabling south for now, doesn't work with python 3.3 and django 1.5
     #'south',
-    'proverbs',
+    'apps.proverbs',
 )
 
 # A sample logging configuration. The only tangible logging
