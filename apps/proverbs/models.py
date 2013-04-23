@@ -1,3 +1,5 @@
+from string import punctuation
+
 from django.contrib.auth.models import User
 from django.db import models
 from django.dispatch import receiver
@@ -14,7 +16,7 @@ class Proverb(models.Model):
     text = models.CharField(max_length=255)
     description = models.TextField()
 
-    def __unicode__(self):
+    def __str__(self):
         return '%s' % self.text
 
     def get_next_for_user(self, user):
@@ -33,6 +35,9 @@ class SuggestionWord(models.Model):
     """
     word = models.CharField(max_length=64, unique=True)
 
+    def __str__(self):
+        return self.word
+
 
 @receiver(models.signals.post_save, sender=Proverb)
 def add_new_suggestion_words(sender, instance, created, **kwargs):
@@ -40,8 +45,13 @@ def add_new_suggestion_words(sender, instance, created, **kwargs):
     """
     if created:
         words = set()
-        words.update([x.lower() for x in instance.text.split()])
-        words.update([x.lower() for x in instance.description.split()])
+        words.update(
+            [x.lower().strip(punctuation) for x in instance.text.split()]
+        )
+        words.update(
+            [x.lower().strip(punctuation)
+             for x in instance.description.split()]
+        )
         # there is bulk get_or_create method yet
         for word in words:
             word, created = SuggestionWord.objects.get_or_create(word=word)
@@ -55,7 +65,7 @@ class ProverbScore(models.Model):
     # how many times has the user answered correctly to this proverb
     correct_count = models.PositiveIntegerField()
 
-    def __unicode__(self):
+    def __str__(self):
         return '%s - %s - %d - %d' % (self.user.username, self.proverb[:20],
                                       self.view_count, self.correct_count)
 
@@ -79,7 +89,7 @@ class ScoreList(models.Model):
     user = models.OneToOneField(User)
     score = models.PositiveIntegerField()
 
-    def __unicode__(self):
+    def __str__(self):
         return '%s - %d' % (self.user.username, self.score)
 
 
@@ -95,7 +105,7 @@ class UserProfile(models.Model):
     # used to show the user's score on the score board
     publish_score = models.BooleanField(default=True)
     # used to decide the game length for the user
-    game_time = models.SmallPositiveIntegerField(choices=GAME_TIME_CHOICES,
+    game_time = models.PositiveSmallIntegerField(choices=GAME_TIME_CHOICES,
                                                  default=DEFAULT_GAME_TIME)
 
 
