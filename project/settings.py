@@ -169,3 +169,9 @@ LOGGING = {
         },
     }
 }
+
+FACEBOOK = {
+    "APP_ID": "",
+    "APP_SECRET": "",
+    "CANVAS_URL": ""
+}

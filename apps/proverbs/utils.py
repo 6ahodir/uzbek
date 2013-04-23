@@ -1,5 +1,9 @@
 from string import punctuation
 
+from django.conf import settings
+
+from facebook_sdk import facebook as fb
+
 
 def construct_question(text):
     """Transform text into a question, where each word's case is output.
@@ -26,3 +30,34 @@ def construct_question(text):
             result.append('l')
 
     return result
+
+
+def get_facebook_graph(signed_request):
+    """Get facebook graph object from the signed_request"""
+    signed_request_data = fb.parse_signed_request(
+        signed_request, settings.FACEBOOK['APP_SECRET']
+    )
+
+    if not signed_request_data:
+        return None
+
+    # get the user profile data from facebook
+    try:
+        graph = fb.GraphAPI(signed_request_data.get("oauth_token"))
+        return graph
+    except fb.GraphAPIError:
+        return None
+
+
+def get_facebook_profile(signed_request):
+    """Get the user's profile from the signed_request"""
+    graph = get_facebook_graph(signed_request)
+
+    if not graph:
+        return None
+
+    try:
+        profile = graph.get_object("me")
+        return profile
+    except fb.GraphAPIError:
+        return None
