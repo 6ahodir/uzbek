@@ -1,3 +1,4 @@
+from random import randrange
 from string import punctuation
 
 from django.contrib.auth.models import User
@@ -19,11 +20,15 @@ class Proverb(models.Model):
     def __str__(self):
         return '%s' % self.text
 
+    @classmethod
     def get_next_for_user(self, user):
         """Get the next proverb for the user"""
-        proverb = Proverb.objects.filter(ProverbScore=None).order_by('?')
-        if proverb.count():
-            return proverb.latest()
+        proverbs = Proverb.objects.filter(ProverbScore=None)
+        count = proverbs.count()
+        if count:
+            # get random, order_by('?') is slow
+            random_index = randrange(count - 1)
+            return proverbs[random_index]
         else:
             return ProverbScore.get_lowest_score_for_user(user)
 
