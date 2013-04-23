@@ -15,9 +15,9 @@ DEFAULT_GAME_TIME = 3
 
 # How many points does a user earn per correct answer?
 SCORES = {
-    10: 5   # within 10 seconds is 5 points
-    20: 4   # within 20 seconds but more than 10 seconds is 4 points
-    30: 3   # within 30 seconds but more than 20 seconds is 3 points
+    10: 5,   # within 10 seconds is 5 points
+    20: 4,  # within 20 seconds but more than 10 seconds is 4 points
+    30: 3,  # within 30 seconds but more than 20 seconds is 3 points
     0: 1    # more than 30 seconds is 1 point
 }
 

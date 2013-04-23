@@ -1,6 +1,7 @@
 from django.shortcuts import render_to_response
 
 from proverbs.models import Proverb
+from proverbs.utils import construct_question
 
 
 def index(request, template_name):
