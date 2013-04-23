@@ -4,6 +4,7 @@ from proverbs.models import Proverb
 
 
 def index(request, template_name):
+    """Index Page"""
     data = {}
 
     proverbs = Proverb.objects.all()

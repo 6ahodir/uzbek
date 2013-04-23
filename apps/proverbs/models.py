@@ -1,4 +1,5 @@
-from random import randrange
+from math import ceil
+from random import randrange, shuffle
 from string import punctuation
 
 from django.contrib.auth.models import User
@@ -12,6 +13,13 @@ GAME_TIME_CHOICES = ((1, '1 min'), (3, '3 mins'), (5, '5 mins'))
 # GAME_TIME_CHOICES tuple
 DEFAULT_GAME_TIME = 3
 
+# How many points does a user earn per correct answer?
+SCORES = {
+    10: 5   # within 10 seconds is 5 points
+    20: 4   # within 20 seconds but more than 10 seconds is 4 points
+    30: 3   # within 30 seconds but more than 20 seconds is 3 points
+    0: 1    # more than 30 seconds is 1 point
+}
 
 class Proverb(models.Model):
     text = models.CharField(max_length=255)
@@ -21,16 +29,30 @@ class Proverb(models.Model):
         return '%s' % self.text
 
     @classmethod
-    def get_next_for_user(self, user):
-        """Get the next proverb for the user"""
+    def get_next_for_user(cls, user):
+        """Get the next proverb and possible answers for the user"""
         proverbs = Proverb.objects.filter(ProverbScore=None)
         count = proverbs.count()
         if count:
             # get random, order_by('?') is slow
             random_index = randrange(count - 1)
-            return proverbs[random_index]
+            proverb = proverbs[random_index]
         else:
-            return ProverbScore.get_lowest_score_for_user(user)
+            proverb = ProverbScore.get_lowest_score_for_user(user)
+
+        if not proverb:
+            return None
+
+        words = [x.lower().strip(punctuation) for x in proverb.text.split()]
+        word_count = len(words)
+        # each word will have two suggestions
+        suggestion_words = SuggestionWord.objects.order_by('?')\
+                [:proverb_count * 2]
+        suggestions = [x.word for x in suggestion_words]
+        # add the correct answers too
+        suggestions.extend(words)
+        shuffle(suggestions)
+        return (proverb, suggestions)
 
 
 class SuggestionWord(models.Model):
@@ -96,6 +118,22 @@ class ScoreList(models.Model):
 
     def __str__(self):
         return '%s - %d' % (self.user.username, self.score)
+
+    @classmethod
+    def get_score(cls, results):
+        """Calculate a game's score
+        results is a list of times in seconds a user took to answer the
+        question correctly
+        """
+        score = 0
+        for result in results:
+            secs = ceil(result / 10)
+            if secs in SCORES:
+                points = SCORES[secs]
+            else:
+                points = SCORES[0]
+            score += points
+        return score
 
 
 class UserProfile(models.Model):
