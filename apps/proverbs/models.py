@@ -41,7 +41,7 @@ class SuggestionWord(models.Model):
 
 @receiver(models.signals.post_save, sender=Proverb)
 def add_new_suggestion_words(sender, instance, created, **kwargs):
-    """Add new words when a new user is created
+    """Add new words when a new proverb is created
     """
     if created:
         words = set()
@@ -52,7 +52,7 @@ def add_new_suggestion_words(sender, instance, created, **kwargs):
             [x.lower().strip(punctuation)
              for x in instance.description.split()]
         )
-        # there is bulk get_or_create method yet
+        # there is no bulk get_or_create method yet
         for word in words:
             word, created = SuggestionWord.objects.get_or_create(word=word)
 
