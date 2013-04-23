@@ -26,6 +26,27 @@ class Proverb(models.Model):
             return ProverbScore.get_lowest_score_for_user(user)
 
 
+class SuggestionWord(models.Model):
+    """Words used as suggestion to a given question.
+    These words are unique and taken from Proverb.text and Proverb.description
+    and converted to lowercase
+    """
+    word = models.CharField(max_length=64, unique=True)
+
+
+@receiver(models.signals.post_save, sender=Proverb)
+def add_new_suggestion_words(sender, instance, created, **kwargs):
+    """Add new words when a new user is created
+    """
+    if created:
+        words = set()
+        words.update([x.lower() for x in instance.text.split()])
+        words.update([x.lower() for x in instance.description.split()])
+        # there is bulk get_or_create method yet
+        for word in words:
+            word, created = SuggestionWord.objects.get_or_create(word=word)
+
+
 class ProverbScore(models.Model):
     proverb = models.ForeignKey(Proverb)
     user = models.ForeignKey(User)
