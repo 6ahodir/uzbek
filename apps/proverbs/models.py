@@ -3,7 +3,7 @@ from random import randrange, shuffle
 from string import punctuation
 
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, transaction
 from django.dispatch import receiver
 
 # How long should a game last?
@@ -20,6 +20,7 @@ SCORES = {
     30: 3,  # within 30 seconds but more than 20 seconds is 3 points
     0: 1    # more than 30 seconds is 1 point
 }
+
 
 class Proverb(models.Model):
     text = models.CharField(max_length=255)
@@ -44,10 +45,9 @@ class Proverb(models.Model):
             return None
 
         words = [x.lower().strip(punctuation) for x in proverb.text.split()]
-        word_count = len(words)
         # each word will have two suggestions
-        suggestion_words = SuggestionWord.objects.order_by('?')\
-                [:proverb_count * 2]
+        suggestion_words = SuggestionWord.objects.order_by('?')[:len(words) *
+                                                                2]
         suggestions = [x.word for x in suggestion_words]
         # add the correct answers too
         suggestions.extend(words)
@@ -151,6 +151,15 @@ class UserProfile(models.Model):
     game_time = models.PositiveSmallIntegerField(choices=GAME_TIME_CHOICES,
                                                  default=DEFAULT_GAME_TIME)
 
+    def __str__(self):
+        return '%s - %s' % (self.user.username, self.facebook_id)
+
+    def save(self, *args, **kwargs):
+        # get the facebook_id from the username, which may change later
+        if not self.facebook_id:
+            self.facebook_id = self.user.username
+        super(UserProfile, self).save(*args, **kwargs)
+
 
 @receiver(models.signals.post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
@@ -158,3 +167,23 @@ def create_user_profile(sender, instance, created, **kwargs):
     """
     if created:
         profile, created = UserProfile.objects.get_or_create(user=instance)
+
+
+def get_or_create_fb_user(fb_profile):
+    """Get or create facebook user by facebook id"""
+    try:
+        user = User.objects.get(userprofile__facebook_id=fb_profile.get('id'))
+    except User.DoesNotExist:
+        user = User(
+            # user name must be the facebook ID initailly,
+            # once a UserProfile is created the username may be changed
+            username=fb_profile.get('id'),
+            first_name=fb_profile.get('first_name'),
+            last_name=fb_profile.get('last_name'),
+            email=fb_profile.get('email')
+        )
+        password = User.objects.make_random_password()
+        user.set_password(password)
+        user.save()
+
+    return user
