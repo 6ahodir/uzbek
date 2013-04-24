@@ -1,8 +1,12 @@
+import logging
 from string import punctuation
+from sys import exc_info
 
 from django.conf import settings
 
 from facebook_sdk import facebook as fb
+
+logger = logging.getLogger(__name__)
 
 
 def construct_question(text):
@@ -34,19 +38,20 @@ def construct_question(text):
 
 def get_facebook_graph(signed_request):
     """Get facebook graph object from the signed_request"""
-    signed_request_data = fb.parse_signed_request(
-        signed_request, settings.FACEBOOK['APP_SECRET']
-    )
-
-    if not signed_request_data:
-        return None
-
-    # get the user profile data from facebook
     try:
-        graph = fb.GraphAPI(signed_request_data.get("oauth_token"))
-        return graph
-    except fb.GraphAPIError:
-        return None
+        facebook = fb.Facebook(
+            {'signed_request': signed_request},
+            settings.FACEBOOK['APP_ID'],
+            settings.FACEBOOK['APP_SECRET']
+        )
+        session = facebook.getSession()
+        graph = facebook.getGraph()
+    except Exception as e:
+        logger.error(e, exc_info=exc_info())
+        print(e)
+        graph = None
+
+    return graph
 
 
 def get_facebook_profile(signed_request):
@@ -58,6 +63,7 @@ def get_facebook_profile(signed_request):
 
     try:
         profile = graph.get_object("me")
-        return profile
     except fb.GraphAPIError:
-        return None
+        profile = None
+
+    return profile
