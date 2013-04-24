@@ -13,16 +13,11 @@
 {% endblock %}
 
 {% block content %}
-<ul>
-    {% for proverb in proverbs %}
-    <li>{{ proverb.text }}</li>
-    {% endfor %}
-</ul>
+{{ question }}
 <br>
-{{ fb_profile }}
-
-{{ profile }}
-
-<a href="{% url "proverbs:quiz" %}">Start</a>
+{{ suggestions }}
+<br>
+{{ start }}
 {% endblock content %}
+
 

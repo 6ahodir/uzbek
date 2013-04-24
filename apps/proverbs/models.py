@@ -3,7 +3,7 @@ from random import randrange, shuffle
 from string import punctuation
 
 from django.contrib.auth.models import User
-from django.db import models, transaction
+from django.db import models#, transaction
 from django.dispatch import receiver
 
 # How long should a game last?
@@ -12,6 +12,9 @@ GAME_TIME_CHOICES = ((1, '1 min'), (3, '3 mins'), (5, '5 mins'))
 # Default game will last 3 minutes, make sure this number is in the
 # GAME_TIME_CHOICES tuple
 DEFAULT_GAME_TIME = 3
+
+# How many suggested words should we show?
+SUGGESTIONS_COUNT = 20
 
 # How many points does a user earn per correct answer?
 SCORES = {
@@ -32,7 +35,7 @@ class Proverb(models.Model):
     @classmethod
     def get_next_for_user(cls, user):
         """Get the next proverb and possible answers for the user"""
-        proverbs = Proverb.objects.filter(ProverbScore=None)
+        proverbs = Proverb.objects.filter(proverbscore=None)
         count = proverbs.count()
         if count:
             # get random, order_by('?') is slow
@@ -46,8 +49,8 @@ class Proverb(models.Model):
 
         words = [x.lower().strip(punctuation) for x in proverb.text.split()]
         # each word will have two suggestions
-        suggestion_words = SuggestionWord.objects.order_by('?')[:len(words) *
-                                                                2]
+        suggestion_words = SuggestionWord.objects.order_by(
+            '?')[:SUGGESTIONS_COUNT - len(words)]
         suggestions = [x.word for x in suggestion_words]
         # add the correct answers too
         suggestions.extend(words)

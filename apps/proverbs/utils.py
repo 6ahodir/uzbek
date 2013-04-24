@@ -44,7 +44,7 @@ def get_facebook_graph(signed_request):
             settings.FACEBOOK['APP_ID'],
             settings.FACEBOOK['APP_SECRET']
         )
-        session = facebook.getSession()
+        #session = facebook.getSession()
         graph = facebook.getGraph()
     except Exception as e:
         logger.error(e, exc_info=exc_info())
