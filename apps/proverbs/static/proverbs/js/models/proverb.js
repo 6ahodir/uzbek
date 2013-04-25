@@ -4,9 +4,10 @@ var app = app || {};
 (function () {
 	'use strict';
 
-	// Proverb Model
+	// Quiz Model
 	// ----------
 
-	app.Proverb = Backbone.Model.extend({
+	app.Quiz = Backbone.Model.extend({
+
 	});
 })();

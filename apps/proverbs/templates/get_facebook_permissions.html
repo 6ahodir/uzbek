@@ -1,0 +1,59 @@
+{% extends "./base.html" %}
+
+{% block content %}
+    <a href="#" onclick="login(); return false;">Login</a>
+
+    <div id="fb-root"></div>
+    <script>
+    // Additional JS functions here
+    window.fbAsyncInit = function() {
+        FB.init({
+            appId      : '{{ facebook.APP_ID }}', // App ID
+            channelUrl : '{{ facebook_channel_url }}', // Channel File
+            status     : true, // check login status
+            cookie     : true, // enable cookies to allow the server to access the session
+            xfbml      : true  // parse XFBML
+        });
+
+        FB.getLoginStatus(function(response) {
+            if (response.status === 'connected') {
+                // connected
+            } else if (response.status === 'not_authorized') {
+                // not_authorized
+            } else {
+                // not_logged_in
+            }
+        });
+
+    };
+
+    function login() {
+        FB.login(function(response) {
+            if (response.authResponse) {
+                //console.log(response);
+                //testAPI();
+                window.location.href = '{% url "proverbs:index" %}?signed_request=' + response.authResponse.signedRequest
+                // connected
+            } else {
+                // cancelled
+            }
+        }, {scope: 'email,user_photos,user_birthday,publish_stream,offline_access'});
+    }
+
+    function testAPI() {
+        console.log('Welcome!  Fetching your information.... ');
+        FB.api('/me', function(response) {
+            console.log('Good to see you, ' + response.name + '.');
+        });
+    }
+
+    // Load the SDK Asynchronously
+    (function(d){
+        var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+        if (d.getElementById(id)) {return;}
+        js = d.createElement('script'); js.id = id; js.async = true;
+        js.src = "//connect.facebook.net/en_US/all.js";
+        ref.parentNode.insertBefore(js, ref);
+    }(document));
+    </script>
+{% endblock %}

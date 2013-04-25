@@ -13,10 +13,28 @@
 {% endblock %}
 
 {% block content %}
-{{ question }}
-<br>
-{{ suggestions }}
-<br>
+<div id="timer">
+    {# a moving timer #}
+</div>
+<div id="desc">
+    {{ description }}
+</div>
+<div id="question">
+    {# placeholders for each word + punctuation marks #}
+    {{ question }}
+</div>
+<div id="suggestions">
+    {{ suggestions }}
+</div>
+<div id="score">
+    {# initially 0, but increases with each correct answer #}
+</div>
+<div id="hint">
+    {# total number of hints #}
+</div>
+<div id="next">
+    {# move to the next question if correct, or skip if not complete or wrong #}
+</div>
 {{ start }}
 {% endblock content %}
 
