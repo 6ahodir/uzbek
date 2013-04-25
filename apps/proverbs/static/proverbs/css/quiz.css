@@ -1,0 +1,23 @@
+#question {
+    font-size: 18px;
+}
+#question .placeholder {
+    border-bottom: 1px dashed #ccc;
+    display: inline-block;
+    height: 40px;
+    margin-right: 10px;
+    min-width: 64px;
+}
+#question .punctuation {
+    margin: 0 10px 0 -10px;
+}
+
+#suggestions .suggestion {
+    background-color: #ccc;
+    border: 1px dotted #333;
+    color: green;
+    cursor: move;
+    display: inline-block;
+    margin: 5px 10px 5px 0;
+    padding: 2px 5px;
+}

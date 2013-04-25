@@ -11,7 +11,7 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.views.decorators.csrf import csrf_exempt
 
-from proverbs.models import Proverb
+from proverbs.models import Proverb, DEFAULT_GAME_TIME, DEFAULT_HINT_COUNT
 from proverbs.models import get_or_create_fb_user
 from proverbs import utils
 
@@ -77,6 +77,8 @@ def quiz(request, template_name):
     data['question'] = utils.construct_question(proverb.text)
     data['suggestions'] = suggestions
     data['start'] = datetime.now()
+    data['hints'] = DEFAULT_HINT_COUNT
+    data['time'] = DEFAULT_GAME_TIME
     return render_to_response(
         template_name,
         data,

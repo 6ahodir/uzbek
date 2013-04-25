@@ -3,39 +3,80 @@
 
 {% block page_title %}Proverbs - Home{% endblock %}
 
+{% block css %}
+    <link rel="stylesheet" href="{% static "css/vendor/jquery-ui/no-theme/jquery-ui-1.10.2.custom.css" %}">
+    <link rel="stylesheet" href="{% static "proverbs/css/quiz.css" %}">
+{% endblock %}
+
 {% block javascript %}
-    <script src="{% static "proverbs/js/models/proverb.js" %}"></script>
-    <script src="{% static "proverbs/js/collections/proverbs.js" %}"></script>
-    <script src="{% static "proverbs/js/views/proverb.js" %}"></script>
-    <script src="{% static "proverbs/js/views/app.js" %}"></script>
-    <script src="{% static "proverbs/js/routers/router.js" %}"></script>
-    <script src="{% static "proverbs/js/app.js" %}"></script>
+    <script src="{% static "js/vendor/jquery-ui-1.10.2.custom.js" %}"></script>
+    <script src="{% static "proverbs/js/models/quiz.js" %}"></script>
+    <script src="{% static "proverbs/js/views/quiz.js" %}"></script>
+    <script>
+        $(function () {
+            app.data = {
+                desc: '{{ description|escapejs }}',
+                question: [
+                    {% for q in question %}
+                        '{{ q|escapejs }}'{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                suggestions: [
+                    {% for suggestion in suggestions %}
+                        '{{ suggestion|escapejs }}'{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                score: 0,   // on page load
+                hints: {{ hints }},
+                time: {{ time }}
+            }
+            app.quiz = new app.Quiz(app.data);
+            app.quizView = new app.QuizView({model: app.quiz});
+        });
+    </script>
 {% endblock %}
 
 {% block content %}
-<div id="timer">
-    {# a moving timer #}
-</div>
-<div id="desc">
-    {{ description }}
-</div>
-<div id="question">
-    {# placeholders for each word + punctuation marks #}
-    {{ question }}
-</div>
-<div id="suggestions">
-    {{ suggestions }}
-</div>
-<div id="score">
-    {# initially 0, but increases with each correct answer #}
-</div>
-<div id="hint">
-    {# total number of hints #}
-</div>
-<div id="next">
-    {# move to the next question if correct, or skip if not complete or wrong #}
-</div>
-{{ start }}
+
+    <div id="quiz">
+    </div>
+
+    {{ start }}
+
+    <script id="quiz-template" type="text/html">
+        <div id="timer">
+            {# a moving timer #}
+            <%= time %>
+        </div>
+        <div id="desc">
+            <%= desc %>
+        </div>
+        <div id="question">
+            {# placeholders for each word + punctuation marks #}
+            <% _.each(question, function (q) { %>
+                <% if (q === 'u' || q === 'l') { %>
+                    <span class="placeholder <%= q %>"></span>
+                <% } else { %>
+                    <span class="punctuation"><%= q %></span>
+                <% } %>
+            <% }) %>
+        </div>
+        <div id="suggestions">
+            <% _.each(suggestions, function (s) { %>
+                <span class="suggestion"><%= s %></span>
+            <% }) %>
+        </div>
+        <div id="score">
+            {# initially 0, but increases with each correct answer #}
+            <%= score %>
+        </div>
+        <div id="hints">
+            {# total number of hints #}
+            <%= hints %>
+        </div>
+        <div id="next">
+            {# move to the next question if correct, or skip if not complete or wrong #}
+            <a class="next">Next | Skip</a>
+        </div>
+    </script>
 {% endblock content %}
-
-

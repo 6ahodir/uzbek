@@ -24,6 +24,8 @@ SCORES = {
     0: 1    # more than 30 seconds is 1 point
 }
 
+# How many hints does a user get?
+DEFAULT_HINT_COUNT = 5
 
 class Proverb(models.Model):
     text = models.CharField(max_length=255)
