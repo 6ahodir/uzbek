@@ -16,11 +16,11 @@
         $(function () {
             app.data = {
                 desc: '{{ description|escapejs }}',
-                question: [
+                question: {
                     {% for q in question %}
-                        '{{ q|escapejs }}'{% if not forloop.last %},{% endif %}
+                        {{ forloop.counter }}: '{{ q|escapejs }}'{% if not forloop.last %},{% endif %}
                     {% endfor %}
-                ],
+                },
                 suggestions: [
                     {% for suggestion in suggestions %}
                         '{{ suggestion|escapejs }}'{% if not forloop.last %},{% endif %}
@@ -53,17 +53,17 @@
         </div>
         <div id="question">
             {# placeholders for each word + punctuation marks #}
-            <% _.each(question, function (q) { %>
-                <% if (q === 'u' || q === 'l') { %>
-                    <span class="placeholder <%= q %>"></span>
+            <% _.each(question, function (val, key) { %>
+                <% if (val === 'u' || val === 'l') { %>
+                    <span class="placeholder" data-key="<%= key %>"></span>
                 <% } else { %>
-                    <span class="punctuation"><%= q %></span>
+                    <span class="punctuation"><%= val %></span>
                 <% } %>
             <% }) %>
         </div>
         <div id="suggestions">
-            <% _.each(suggestions, function (s) { %>
-                <span class="suggestion"><%= s %></span>
+            <% _.each(suggestions, function (val, key) { %>
+                <span class="suggestion" data-key="<%= key %>"><%= val %></span>
             <% }) %>
         </div>
         <div id="score">
