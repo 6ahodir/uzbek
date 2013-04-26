@@ -30,7 +30,7 @@
     padding: 2px 5px;
 }
 #suggestions .suggestion.used {
-    background-color: #fff;
+    background-color: transparent;
     border: none;
     padding-top: 10px;
 }

@@ -79,4 +79,11 @@
             <a class="next">Next | Skip</a>
         </div>
     </script>
+
+    <script id="timer-template" type="text/html">
+        <span class="mins"><%= mins %></span>
+        <span class="sep">:</span>
+        <span class="secs"><%= (secs < 10) ? '0' + secs : secs %></span>
+    </script>
+
 {% endblock content %}
