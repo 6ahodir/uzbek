@@ -1,4 +1,6 @@
+import json
 import logging
+from uuid import uuid4
 
 from datetime import datetime
 
@@ -64,19 +66,31 @@ def index(request, template_name):
                               context_instance=RequestContext(request))
 
 
+def _generate_question(request):
+    data = {}
+
+    proverb, suggestions = Proverb.get_next_for_user(request.user)
+
+    uuid = str(uuid4())
+    # todo: set expiration
+    request.session['quiz-%s' % uuid] = (proverb, datetime.now())
+
+    data['uuid'] = uuid
+    data['description'] = proverb.description
+    data['question'] = utils.construct_question(proverb.text)
+    data['suggestions'] = suggestions
+
+    return data
+
+
 #@login_required
 def quiz(request, template_name):
     """Start the quiz and show the first question"""
     data = {}
 
-    proverb, suggestions = Proverb.get_next_for_user(request.user)
+    data.update(_generate_question(request))
 
-    request.session['proverb'] = proverb
-
-    data['description'] = proverb.description
-    data['question'] = utils.construct_question(proverb.text)
-    data['suggestions'] = suggestions
-    data['start'] = datetime.now()
+    data['next_url'] = reverse('proverbs:check_answer')
     data['hints'] = DEFAULT_HINT_COUNT
     data['time'] = DEFAULT_GAME_TIME
     return render_to_response(
@@ -84,6 +98,44 @@ def quiz(request, template_name):
         data,
         context_instance=RequestContext(request)
     )
+
+
+def check_answer(request):
+    data = {}
+
+    if not request.is_ajax():
+        raise Http404
+
+    uuid = request.POST.get('uuid')
+    answers = request.POST.getlist('answers[]', [])
+
+    if not uuid:
+        return HttpResponse('error: uuid')
+
+    saved = request.session.get('quiz-%s' % uuid)
+    if not saved:
+        return HttpResponse('error: session')
+
+    proverb, start = saved
+
+    end = datetime.now()
+
+    result = utils.check_answers(proverb.text, answers)
+
+    if not result:
+        return HttpResponse('wrong')
+
+    # delete session
+    del request.session['quiz-%s' % uuid]
+
+    # calculate score
+
+    data.update(_generate_question(request))
+    data['answer'] = 'correct'
+
+    # return a new question
+    return HttpResponse(json.dumps(data),
+                        mimetype='application/json')
 
 
 def get_facebook_permissions(request, template_name):

@@ -17,7 +17,7 @@
         $(function () {
             app.data = {};
             app.data.quiz = {
-                desc: '{{ description|escapejs }}',
+                description: '{{ description|escapejs }}',
                 question: [
                     {% for q in question %}
                         '{{ q|escapejs }}'{% if not forloop.last %},{% endif %}
@@ -30,7 +30,9 @@
                 ],
                 score: 0,   // on page load
                 hints: {{ hints }},
-                time: {{ time }}
+                time: {{ time }},
+                uuid: '{{ uuid }}',
+                nextUrl: '{{ next_url }}'
             };
 
             app.quiz = new app.Quiz(app.data.quiz);
@@ -40,11 +42,10 @@
 {% endblock %}
 
 {% block content %}
+    {% csrf_token %}
 
     <div id="quiz">
     </div>
-
-    {{ start }}
 
     <script id="quiz-template" type="text/html">
         <div id="timer">
@@ -52,7 +53,7 @@
             <%= time %>
         </div>
         <div id="desc">
-            <%= desc %>
+            <%= description %>
         </div>
         <ul id="answers">
             {# placeholders for each word + punctuation marks #}
@@ -69,7 +70,7 @@
         </div>
         <div id="next">
             {# move to the next question if correct, or skip if not complete or wrong #}
-            <a class="next">Skip</a>
+            <a href="#" class="next">Skip</a>
         </div>
     </script>
 

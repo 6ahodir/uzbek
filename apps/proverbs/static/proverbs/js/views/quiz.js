@@ -92,40 +92,23 @@ var app = app || {};
 
 		// The DOM events specific to an item.
 		events: {
+            'click #next .next': 'nextOrSkip'
 		},
 
 		initialize: function() {
-            var answers = [],
-                suggestions = [];
+            _.bindAll(this, 'makeSuggestionsDraggable', 'makeAnswersDroppable',
+                    'updateNextButton', 'nextOrSkip', 'showQuestion',
+                    'addAnswers', 'addSuggestions');
 
-            this.data = {};
 
-            // create the answers data
-            _.each(this.model.get('question'), function (val, key) {
-                // ignore punctuation
-                answers.push({
-                    id: key + 1,
-                    val: val
-                });
-            });
-            this.data.answers = answers;
+            this.answers = new app.Answers();
+            this.suggestions = new app.Suggestions();
 
-            // create the suggestions collection
-            _.each(this.model.get('suggestions'), function (val, key) {
-                // ignore punctuation
-                suggestions.push({
-                    id: key + 1,
-                    text: val
-                });
-            });
-            this.data.suggestions = suggestions;
-
-            this.answers = new app.Answers(answers);
-            this.suggestions = new app.Suggestions(suggestions);
-
-            _.bindAll(this, 'makeSuggestionsDraggable', 'makeAnswersDroppable');
 			//this.listenTo(this.model, 'change:question', this.model.setAnswer);
+            this.listenTo(this.model, 'change:uuid', this.showQuestion);
             this.listenTo(this.answers, 'reset', this.addAnswers);
+            this.listenTo(this.answers, 'reset', this.updateNextButton);
+            this.listenTo(this.answers, 'change:suggestionId', this.updateNextButton);
             this.listenTo(this.suggestions, 'reset', this.addSuggestions);
             this.render();
 		},
@@ -141,18 +124,46 @@ var app = app || {};
             this.$answers = this.$el.find('#answers');
             this.$suggestions = this.$el.find('#suggestions');
 
-            this.addAnswers();
-            this.addSuggestions();
-
             this.timer = new app.Timer({}, {'time': this.model.get('time')});
             this.timerView = new app.TimerView({model: this.timer});
+
+            this.showQuestion();
+
+			return this;
+		},
+
+        showQuestion: function() {
+            var answers = [],
+                suggestions = [];
+
+            // create the answers data
+            _.each(this.model.get('question'), function (val, key) {
+                // ignore punctuation
+                answers.push({
+                    id: key + 1,
+                    val: val
+                });
+            });
+
+            // create the suggestions collection
+            _.each(this.model.get('suggestions'), function (val, key) {
+                // ignore punctuation
+                suggestions.push({
+                    id: key + 1,
+                    text: val
+                });
+            });
+
+            // show description
+            this.$el.find('#desc').text(this.model.get('description'));
+
+            this.answers.reset(answers);
+            this.suggestions.reset(suggestions);
 
             this.makeSuggestionsDraggable();
             this.makeAnswersDroppable();
             this.defaultPlaceholderWidth = this.$answers.find('.placeholder:first').width();
-
-			return this;
-		},
+        },
 
         addAnswers: function () {
             this.$el.find('#answers').html('');
@@ -187,6 +198,14 @@ var app = app || {};
 
                     if (!suggestion.get('used')) {
                         ui.helper.animate({top: 0, left: 0}).removeClass('used').removeClass('capital');
+                        if (suggestion.get('answerId')) {
+                            that.answers.get(suggestion.get('answerId')).set('suggestionId', '');
+                            suggestion.set('answerId', '');
+                        }
+                    } else if (that.answers.get(suggestion.get('answerId')).get('val') === 'u') {
+                        ui.helper.addClass('capital');
+                    } else {
+                        ui.helper.removeClass('capital');
                     }
                 }
             });
@@ -221,6 +240,11 @@ var app = app || {};
                             });
                             movedAnswer.set('suggestionId', existingSuggestion.get('id'));
                             movedAnswer.get('view').$el.find('.placeholder').css('width', existingSuggestion.get('view').$el.find('.suggestion').width() + 5);
+                            if (movedAnswer.get('val') === 'u') {
+                                existingSuggestion.get('view').$el.find('.suggestion').addClass('capital');
+                            } else {
+                                existingSuggestion.get('view').$el.find('.suggestion').removeClass('capital');
+                            }
                             existingSuggestion.get('view').$el.find('.suggestion').offset(movedOffset);
                         } else {
                             existingSuggestion.get('view').$el.find('.suggestion').animate({top: 0, left: 0}).removeClass('used').removeClass('capital');
@@ -230,6 +254,9 @@ var app = app || {};
                                 'used': false
                             });
                         }
+                    } else if (suggestion.get('answerId')) {
+                        // dragging from another answer to this empty answer
+                        that.answers.get(suggestion.get('answerId')).set('suggestionId', '');
                     }
 
                     answer.set('suggestionId', suggestion.get('id'));
@@ -252,6 +279,49 @@ var app = app || {};
                 },
                 tolerance: 'pointer',
                 scope: 'quiz'
+            });
+        },
+
+        updateNextButton: function() {
+            // Toggle between 'next' and 'skip' depending on the answers
+            if (this.answers.areAllAnswered()) {
+                this.$el.find('.next').text('Next');
+            } else {
+                this.$el.find('.next').text('Skip');
+            }
+        },
+
+        nextOrSkip: function(event) {
+            // show the next question
+            var that = this;
+
+            event.preventDefault();
+
+            if (this.answers.areAllAnswered()) {
+                
+            }
+            $.ajax({
+                url: that.model.get('nextUrl'),
+                type: 'POST',
+                data: $.param({
+                    'answers': that.answers.getWords(that.suggestions),
+                    'uuid': that.model.get('uuid'),
+                    'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+                }),
+                success: function(response) {
+                    if (typeof response.answer !== 'undefined' && response.answer === 'correct') {
+                        that.model.set({
+                            'description': response.description,
+                            'question': response.question,
+                            'suggestions': response.suggestions,
+                            'uuid': response.uuid
+                        });
+                    }
+                    console.log(response);
+                },
+                error: function() {
+                
+                }
             });
         }
 	});

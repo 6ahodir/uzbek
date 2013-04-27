@@ -36,6 +36,29 @@ def construct_question(text):
     return result
 
 
+def check_answers(text, answers):
+    """Splits the text and compares words to the words in the answer list"""
+
+    # add space before and after punctuataion marks so that we can split them
+    spaced_punctuation = [' ' + x + ' ' for x in punctuation]
+    text = text.translate(
+        dict((ord(x), y) for (x, y) in zip(punctuation, spaced_punctuation))
+    )
+
+    words = [x.lower() for x in text.split() if x not in punctuation]
+
+    if not len(words) == len(answers):
+        return False
+
+    result = True
+    for word, answer in zip(words, answers):
+        if not word == answer:
+            result = False
+            break
+
+    return result
+
+
 def get_facebook_graph(signed_request):
     """Get facebook graph object from the signed_request"""
     try:

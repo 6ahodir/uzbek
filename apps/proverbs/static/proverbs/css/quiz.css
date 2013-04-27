@@ -12,9 +12,6 @@
     margin-right: 10px;
     width: 80px;
 }
-#answers .placeholder.u {
-    text-transform: capitalize;
-}
 #answers .placeholder.l {
     text-transform: lowercase;
 }
