@@ -11,16 +11,18 @@
 {% block javascript %}
     <script src="{% static "js/vendor/jquery-ui-1.10.2.custom.js" %}"></script>
     <script src="{% static "proverbs/js/models/quiz.js" %}"></script>
+    <script src="{% static "proverbs/js/collections/quiz.js" %}"></script>
     <script src="{% static "proverbs/js/views/quiz.js" %}"></script>
     <script>
         $(function () {
-            app.data = {
+            app.data = {};
+            app.data.quiz = {
                 desc: '{{ description|escapejs }}',
-                question: {
+                question: [
                     {% for q in question %}
-                        {{ forloop.counter }}: '{{ q|escapejs }}'{% if not forloop.last %},{% endif %}
+                        '{{ q|escapejs }}'{% if not forloop.last %},{% endif %}
                     {% endfor %}
-                },
+                ],
                 suggestions: [
                     {% for suggestion in suggestions %}
                         '{{ suggestion|escapejs }}'{% if not forloop.last %},{% endif %}
@@ -29,8 +31,9 @@
                 score: 0,   // on page load
                 hints: {{ hints }},
                 time: {{ time }}
-            }
-            app.quiz = new app.Quiz(app.data);
+            };
+
+            app.quiz = new app.Quiz(app.data.quiz);
             app.quizView = new app.QuizView({model: app.quiz});
         });
     </script>
@@ -51,21 +54,11 @@
         <div id="desc">
             <%= desc %>
         </div>
-        <div id="question">
+        <ul id="answers">
             {# placeholders for each word + punctuation marks #}
-            <% _.each(question, function (val, key) { %>
-                <% if (val === 'u' || val === 'l') { %>
-                    <span class="placeholder" data-key="<%= key %>"></span>
-                <% } else { %>
-                    <span class="punctuation"><%= val %></span>
-                <% } %>
-            <% }) %>
-        </div>
-        <div id="suggestions">
-            <% _.each(suggestions, function (val, key) { %>
-                <span class="suggestion" data-key="<%= key %>"><%= val %></span>
-            <% }) %>
-        </div>
+        </ul>
+        <ul id="suggestions">
+        </ul>
         <div id="score">
             {# initially 0, but increases with each correct answer #}
             <%= score %>
@@ -76,8 +69,20 @@
         </div>
         <div id="next">
             {# move to the next question if correct, or skip if not complete or wrong #}
-            <a class="next">Next | Skip</a>
+            <a class="next">Skip</a>
         </div>
+    </script>
+
+    <script id="answer-template" type="text/html">
+        <% if (val === 'u' || val === 'l') { %>
+            <span class="placeholder" data-id="<%= id %>"></span>
+        <% } else { %>
+            <span class="punctuation"><%= val %></span>
+        <% } %>
+    </script>
+
+    <script id="suggestion-template" type="text/html">
+        <span class="suggestion" data-id="<%= id %>"><%= text %></span>
     </script>
 
     <script id="timer-template" type="text/html">

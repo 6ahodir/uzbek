@@ -51,6 +51,37 @@ var app = app || {};
             }
         }
     });
+    
+    // Answer View
+    // ------------
+    app.AnswerView = Backbone.View.extend({
+        tagName: 'li',
+        template: _.template($('#answer-template').html()),
+        events: {},
+        initialize: function() {
+        },
+        render: function() {
+			this.$el.html(this.template(this.model.toJSON()));
+            this.model.set('view', this);
+            return this;
+        }
+    });
+
+    // Suggestion View
+    // ------------
+    app.SuggestionView = Backbone.View.extend({
+        tagName: 'li',
+        template: _.template($('#suggestion-template').html()),
+        events: {},
+        initialize: function() {
+        },
+        render: function() {
+			this.$el.html(this.template(this.model.toJSON()));
+            this.model.set('view', this);
+            return this;
+        }
+    });
+
 	// Quiz View
 	// --------------
 
@@ -64,88 +95,164 @@ var app = app || {};
 		},
 
 		initialize: function() {
-			this.listenTo(this.model, 'change:question', this.model.setAnswer);
+            var answers = [],
+                suggestions = [];
+
+            this.data = {};
+
+            // create the answers data
+            _.each(this.model.get('question'), function (val, key) {
+                // ignore punctuation
+                answers.push({
+                    id: key + 1,
+                    val: val
+                });
+            });
+            this.data.answers = answers;
+
+            // create the suggestions collection
+            _.each(this.model.get('suggestions'), function (val, key) {
+                // ignore punctuation
+                suggestions.push({
+                    id: key + 1,
+                    text: val
+                });
+            });
+            this.data.suggestions = suggestions;
+
+            this.answers = new app.Answers(answers);
+            this.suggestions = new app.Suggestions(suggestions);
+
+            _.bindAll(this, 'makeSuggestionsDraggable', 'makeAnswersDroppable');
+			//this.listenTo(this.model, 'change:question', this.model.setAnswer);
+            this.listenTo(this.answers, 'reset', this.addAnswers);
+            this.listenTo(this.suggestions, 'reset', this.addSuggestions);
             this.render();
 		},
 
 		render: function() {
             var that = this,
-                $question,
+                $answers,
                 $suggestions,
                 defaultPlaceholderWidth;
 
 			this.$el.html(this.template(this.model.toJSON()));
 
+            this.$answers = this.$el.find('#answers');
+            this.$suggestions = this.$el.find('#suggestions');
+
+            this.addAnswers();
+            this.addSuggestions();
+
             this.timer = new app.Timer({}, {'time': this.model.get('time')});
             this.timerView = new app.TimerView({model: this.timer});
 
+            this.makeSuggestionsDraggable();
+            this.makeAnswersDroppable();
+            this.defaultPlaceholderWidth = this.$answers.find('.placeholder:first').width();
 
-            $question = this.$el.find('#question');
-            $suggestions = this.$el.find('#suggestions');
-            defaultPlaceholderWidth = $question.find('.placeholder:first').width();
+			return this;
+		},
 
-            $('.suggestion', $suggestions).draggable({
+        addAnswers: function () {
+            this.$el.find('#answers').html('');
+			this.answers.each(function (answer) {
+                var view = new app.AnswerView({model: answer});
+                this.$el.find('#answers').append(view.render().el);
+            }, this);
+        },
+
+        addSuggestions: function () {
+            this.$el.find('#suggestions').html('');
+			this.suggestions.each(function (suggestion) {
+                var view = new app.SuggestionView({model: suggestion});
+                this.$el.find('#suggestions').append(view.render().el);
+            }, this);
+        },
+
+        makeSuggestionsDraggable: function() {
+            var that = this,
+                suggestionView,
+                suggestion;
+            $('.suggestion', that.$suggestions).draggable({
                 opacity: 0.5,
                 scope: 'quiz',
                 start: function (event, ui) {
-                    // clear the answer
-                    var suggestionKey = parseInt(ui.helper.data('key'), 10);
-                    _.each(that.model.get('answer'), function (val, key) {
-                        if (suggestionKey === val) {
-                            that.model.get('answer')[key] = '';
-                            $question.find('.placeholder[data-key=' + key + ']').droppable('option', 'disabled', false).css({width: defaultPlaceholderWidth});
-                            // move other dragged elements too because of the widht change above
-                            _.each(that.model.get('answer'), function (val2, key2) {
-                                if (val2) {
-                                    $suggestions.find('.suggestion[data-key=' + val2 + ']').offset(
-                                            $question.find('.placeholder[data-key=' + key2 + ']').offset()
-                                        );
-                                }
-                            });
-                        }
-                    });
+                    suggestion = that.suggestions.get(ui.helper.data('id'));
+                    suggestion.set('used', false);
                 },
                 stop: function (event, ui) {
-                    var suggestionKey = parseInt(ui.helper.data('key'), 10);
-                    // put to default position if not dropped onto a placeholder
-                    if (!_.contains(that.model.get('answer'), suggestionKey)) {
+                    suggestion = that.suggestions.get(ui.helper.data('id'));
+                    suggestionView = suggestion.get('view');
+
+                    if (!suggestion.get('used')) {
                         ui.helper.animate({top: 0, left: 0}).removeClass('used').removeClass('capital');
-                    } else {
-                        _.each(that.model.get('answer'), function (val, key) {
-                            if (suggestionKey === val && that.model.get('question')[key] === 'u') {
-                                ui.helper.addClass('capital');
-                            }
-                        });
                     }
                 }
             });
-            $('#question .placeholder').droppable({
+        },
+
+        makeAnswersDroppable: function() {
+            var that = this;
+            that.$answers.find('.placeholder').droppable({
                 accept: '#suggestions .suggestion',
                 drop: function(event, ui) {
                     var $this = $(this),
-                        suggestionKey;
-                    if (ui.draggable) {
-                        that.model.get('answer')[$this.data('key')] = 
-                            ui.draggable.data('key');
-                        $this.droppable('option', 'disabled', true);
-                        ui.draggable.addClass('used');
-                        $this.css('width', ui.draggable.width() + 5); // for punctuation
-                        // move other dragged elements too because of the widht change above
-                        _.each(that.model.get('answer'), function (val, key) {
-                            if (val) {
-                                $suggestions.find('.suggestion[data-key=' + val + ']').offset(
-                                        $question.find('.placeholder[data-key=' + key + ']').offset()
-                                    );
-                            }
-                        });
+                        answer = that.answers.get($this.data('id')),
+                        answerView = answer.get('view'),
+                        suggestion = that.suggestions.get(ui.draggable.data('id')),
+                        suggestionView = suggestion.get('view');
+                    
+                    //$this.droppable('option', 'disabled', true);
+                    // is already filled?
+                    if (answer.get('suggestionId')) {
+                        var existingSuggestion = that.suggestions.get(answer.get('suggestionId'));
+                        // is replacement already being used?
+                        if (suggestion.get('answerId')) {
+                            // swap places
+                            var movedAnswerId = suggestion.get('answerId'),
+                                movedSuggestionId = suggestion.get('id'),
+                                movedAnswer = that.answers.get(movedAnswerId),
+                                movedOffset = movedAnswer.get('view').$el.find('.placeholder').offset();
+
+                            existingSuggestion.set({
+                                'answerId': movedAnswerId,
+                                'used': true
+                            });
+                            movedAnswer.set('suggestionId', existingSuggestion.get('id'));
+                            movedAnswer.get('view').$el.find('.placeholder').css('width', existingSuggestion.get('view').$el.find('.suggestion').width() + 5);
+                            existingSuggestion.get('view').$el.find('.suggestion').offset(movedOffset);
+                        } else {
+                            existingSuggestion.get('view').$el.find('.suggestion').animate({top: 0, left: 0}).removeClass('used').removeClass('capital');
+                            that.answers.get(existingSuggestion.get('answerId')).get('view').$el.find('.placeholder').css('width', that.defaultPlaceholderWidth);
+                            existingSuggestion.set({
+                                'answerId': '',
+                                'used': false
+                            });
+                        }
                     }
+
+                    answer.set('suggestionId', suggestion.get('id'));
+                    suggestion.set('answerId', answer.get('id'));
+                    suggestion.set('used', true);
+                    ui.draggable.addClass('used');
+                    $this.css('width', ui.draggable.width() + 5); // for punctuation
+
+
+                    // move other dragged elements too because of the width change above
+                    that.suggestions.each(function(suggestion) {
+                        if (suggestion.get('answerId')) {
+                            suggestion.get('view').$el.find('.suggestion').offset(
+                                that.answers.get(suggestion.get('answerId')).get('view').$el.find('.placeholder').offset()
+                            );
+                        }
+                    });
                 },
                 over: function(event, ui) {
                 },
                 tolerance: 'pointer',
                 scope: 'quiz'
             });
-			return this;
-		}
+        }
 	});
 })(jQuery);

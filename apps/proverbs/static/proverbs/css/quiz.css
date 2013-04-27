@@ -1,24 +1,34 @@
-#question {
+#answers {
     font-size: 18px;
+    list-style: none;
 }
-#question .placeholder {
+#answers li {
+    display: inline-block;
+}
+#answers .placeholder {
     border-bottom: 1px dashed #ccc;
     display: inline-block;
     height: 1.5em;
     margin-right: 10px;
     width: 80px;
 }
-#question .placeholder.u {
+#answers .placeholder.u {
     text-transform: capitalize;
 }
-#question .placeholder.l {
+#answers .placeholder.l {
     text-transform: lowercase;
 }
 
-#question .punctuation {
+#answers .punctuation {
     margin: 0 10px 0 -10px;
 }
 
+#suggestions {
+    list-style: none;
+}
+#suggestions li {
+    display: inline-block;
+}
 #suggestions .suggestion {
     background-color: #ccc;
     border: 1px dotted #333;
