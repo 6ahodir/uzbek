@@ -61,7 +61,8 @@ class Proverb(models.Model):
         suggestions = [x.word for x in suggestion_words]
         # add the correct answers too
         suggestions.extend(words)
-        shuffle(suggestions)
+        suggestions.sort()
+        #shuffle(suggestions)
         return (proverb, suggestions)
 
 
