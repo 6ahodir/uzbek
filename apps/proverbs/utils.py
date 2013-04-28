@@ -5,6 +5,7 @@ from sys import exc_info
 from django.conf import settings
 
 from facebook_sdk import facebook as fb
+from proverbs.models import Proverb
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +35,25 @@ def construct_question(text):
             result.append('l')
 
     return result
+
+
+def generate_question(request, exclude):
+    """Generates data needed to display the question and suggestions,
+    excluding proverb IDs in the exclude list"""
+    data = {}
+
+    question = Proverb.get_next_for_user(request.user, exclude)
+
+    if not question:
+        return None
+
+    proverb, suggestions = question
+
+    data['description'] = proverb.description
+    data['question'] = construct_question(proverb.text)
+    data['suggestions'] = suggestions
+
+    return data, proverb
 
 
 def check_answers(text, answers):

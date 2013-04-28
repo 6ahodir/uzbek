@@ -32,6 +32,8 @@
                 hints: {{ hints }},
                 time: {{ time }},
                 uuid: '{{ uuid }}',
+                number: {{ number }},
+                checkUrl: '{{ check_url }}',
                 nextUrl: '{{ next_url }}'
             };
 
@@ -43,7 +45,6 @@
 
 {% block content %}
     {% csrf_token %}
-
     <div id="quiz">
     </div>
 
@@ -70,7 +71,8 @@
         </div>
         <div id="next">
             {# move to the next question if correct, or skip if not complete or wrong #}
-            <a href="#" class="next">Skip</a>
+            <a href="#" class="check">Check Answer</a>
+            <a href="#" class="next">Next</a>
         </div>
     </script>
 

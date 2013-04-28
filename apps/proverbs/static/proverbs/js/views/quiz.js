@@ -92,23 +92,24 @@ var app = app || {};
 
 		// The DOM events specific to an item.
 		events: {
-            'click #next .next': 'nextOrSkip'
+            'click #next .check': 'checkAnswer',
+            'click #next .next': 'showNextQuestion'
 		},
 
 		initialize: function() {
             _.bindAll(this, 'makeSuggestionsDraggable', 'makeAnswersDroppable',
-                    'updateNextButton', 'nextOrSkip', 'showQuestion',
-                    'addAnswers', 'addSuggestions');
+                    'checkAnswer', 'showNextQuestion', 'showQuestion',
+                    'addAnswers', 'addSuggestions', 'disableButton',
+                    'enableButton', 'updateScore');
 
 
             this.answers = new app.Answers();
             this.suggestions = new app.Suggestions();
 
 			//this.listenTo(this.model, 'change:question', this.model.setAnswer);
-            this.listenTo(this.model, 'change:uuid', this.showQuestion);
+            this.listenTo(this.model, 'change:number', this.showQuestion);
+            this.listenTo(this.model, 'change:score', this.updateScore);
             this.listenTo(this.answers, 'reset', this.addAnswers);
-            this.listenTo(this.answers, 'reset', this.updateNextButton);
-            this.listenTo(this.answers, 'change:suggestionId', this.updateNextButton);
             this.listenTo(this.suggestions, 'reset', this.addSuggestions);
             this.render();
 		},
@@ -291,31 +292,40 @@ var app = app || {};
             }
         },
 
-        nextOrSkip: function(event) {
-            // show the next question
+        checkAnswer: function(event) {
+            // show the next question if answer is correct
             var that = this;
+
+            if (that.$el.find('.check').attr('disabled')) {
+                return;
+            }
 
             event.preventDefault();
 
-            if (this.answers.areAllAnswered()) {
-                
-            }
             $.ajax({
-                url: that.model.get('nextUrl'),
+                url: that.model.get('checkUrl'),
                 type: 'POST',
                 data: $.param({
                     'answers': that.answers.getWords(that.suggestions),
                     'uuid': that.model.get('uuid'),
                     'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
                 }),
+                beforeSend: function() {
+                    that.disableButton(that.$el.find('.check'));
+                    that.disableButton(that.$el.find('.next'));
+                },
+                complete: function () {
+                    that.enableButton(that.$el.find('.next'));
+                },
                 success: function(response) {
-                    if (typeof response.answer !== 'undefined' && response.answer === 'correct') {
-                        that.model.set({
-                            'description': response.description,
-                            'question': response.question,
-                            'suggestions': response.suggestions,
-                            'uuid': response.uuid
-                        });
+                    if (typeof response.answer !== 'undefined' && 
+                        response.answer === 'correct') {
+                            that.model.set('score', that.model.get('score') +
+                                response.score);
+                        alert('correct');
+                    } else if (response === 'wrong') {
+                        alert('wrong');
+                        that.enableButton(that.$el.find('.check'));
                     }
                     console.log(response);
                 },
@@ -323,6 +333,61 @@ var app = app || {};
                 
                 }
             });
+        },
+
+        showNextQuestion: function(event) {
+            // show the next question
+            var that = this;
+
+            event.preventDefault();
+
+            $.ajax({
+                url: that.model.get('nextUrl'),
+                type: 'GET',
+                data: {
+                    'uuid': that.model.get('uuid')
+                },
+                beforeSend: function() {
+                    that.disableButton(that.$el.find('.check'));
+                    that.disableButton(that.$el.find('.next'));
+                },
+                complete: function () {
+                    that.enableButton(that.$el.find('.check'));
+                    that.enableButton(that.$el.find('.next'));
+                },
+                success: function(response) {
+                    if (typeof response.success !== 'undefined') {
+                        if (response.success) {
+                            that.model.set({
+                                'description': response.description,
+                                'question': response.question,
+                                'suggestions': response.suggestions,
+                                'number': response.number
+                            });
+                        } else {
+                        
+                        }
+                    } else if (response === 'no more') {
+                        // todo: show the results popup
+                    }
+                    console.log(response);
+                },
+                error: function() {
+                
+                }
+            });
+        },
+
+        disableButton: function($target) {
+            $target.attr('disabled', true);
+        },
+
+        enableButton: function($target) {
+            $target.attr('disabled', false);
+        },
+
+        updateScore: function() {
+            this.$el.find('#score').text(this.model.get('score'));
         }
 	});
 })(jQuery);

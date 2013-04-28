@@ -13,7 +13,8 @@ from django.template import RequestContext
 from django.shortcuts import render_to_response
 from django.views.decorators.csrf import csrf_exempt
 
-from proverbs.models import Proverb, DEFAULT_GAME_TIME, DEFAULT_HINT_COUNT
+from proverbs.models import Proverb, ProverbScore, ScoreList
+from proverbs.models import DEFAULT_HINT_COUNT
 from proverbs.models import get_or_create_fb_user
 from proverbs import utils
 
@@ -66,33 +67,36 @@ def index(request, template_name):
                               context_instance=RequestContext(request))
 
 
-def _generate_question(request):
-    data = {}
-
-    proverb, suggestions = Proverb.get_next_for_user(request.user)
-
-    uuid = str(uuid4())
-    # todo: set expiration
-    request.session['quiz-%s' % uuid] = (proverb, datetime.now())
-
-    data['uuid'] = uuid
-    data['description'] = proverb.description
-    data['question'] = utils.construct_question(proverb.text)
-    data['suggestions'] = suggestions
-
-    return data
-
-
 #@login_required
 def quiz(request, template_name):
     """Start the quiz and show the first question"""
     data = {}
 
-    data.update(_generate_question(request))
+    exclude = []
+    question, proverb = utils.generate_question(request, exclude)
+    data.update(question)
 
-    data['next_url'] = reverse('proverbs:check_answer')
+    uuid = str(uuid4())
+
+    data['uuid'] = uuid
+    data['check_url'] = reverse('proverbs:check_answer')
+    data['next_url'] = reverse('proverbs:next_question')
     data['hints'] = DEFAULT_HINT_COUNT
-    data['time'] = DEFAULT_GAME_TIME
+    data['time'] = request.user.userprofile.game_time
+    data['number'] = 1  # the number of the question
+
+    # todo: set expiration
+    # proverb, start time, result (initally wrong)
+    request.session['quiz-%s' % uuid] = {
+        'proverb': proverb,
+        'start': datetime.now(),
+        'hints': DEFAULT_HINT_COUNT,
+        'time': data['time'],
+        'number': data['number'],
+        'score': 0,  # in the beginning the user's score is 0
+        'exclude': exclude  # showed proverb ids
+    }
+
     return render_to_response(
         template_name,
         data,
@@ -101,8 +105,6 @@ def quiz(request, template_name):
 
 
 def check_answer(request):
-    data = {}
-
     if not request.is_ajax():
         raise Http404
 
@@ -112,26 +114,81 @@ def check_answer(request):
     if not uuid:
         return HttpResponse('error: uuid')
 
-    saved = request.session.get('quiz-%s' % uuid)
-    if not saved:
+    session_quiz = request.session.get('quiz-%s' % uuid)
+    if not session_quiz:
         return HttpResponse('error: session')
 
-    proverb, start = saved
+    #return HttpResponse(str(session_quiz['exclude']))
+    answer = utils.check_answers(session_quiz['proverb'].text, answers)
 
-    end = datetime.now()
+    # increase the view count if not already done so
+    proverb_score = session_quiz.get('proverb_score')
+    if not proverb_score:
+        proverb_score, created = ProverbScore.objects.get_or_create(
+            proverb=session_quiz['proverb'], user=request.user)
+        proverb_score.view_count += 1
+        proverb_score.save()
+        session_quiz['proverb_score'] = proverb_score
+        request.session.modified = True
 
-    result = utils.check_answers(proverb.text, answers)
-
-    if not result:
+    if not answer:
         return HttpResponse('wrong')
 
-    # delete session
-    del request.session['quiz-%s' % uuid]
+    # save proverb result
+    if proverb_score:
+        del session_quiz['proverb_score']
+        proverb_score.correct_count += 1
+        proverb_score.save()
 
     # calculate score
+    score = ScoreList.calculate_score(
+        (datetime.now() - session_quiz['start']).seconds
+    )
+    session_quiz['score'] += score
 
-    data.update(_generate_question(request))
-    data['answer'] = 'correct'
+    request.session.modified = True
+
+    data = {
+        'answer': 'correct',
+        'score': score
+    }
+    return HttpResponse(json.dumps(data),
+                        mimetype='application/json')
+
+
+def next_question(request):
+    if not request.is_ajax():
+        raise Http404
+
+    uuid = request.GET.get('uuid')
+    if not uuid:
+        return HttpResponse('error: uuid')
+
+    session_quiz = request.session.get('quiz-%s' % uuid)
+    if not session_quiz:
+        return HttpResponse('error: session')
+
+    data = {}
+
+    session_quiz['exclude'].append(session_quiz['proverb'].id)
+    session_quiz['number'] += 1
+    request.session.modified = True
+
+    question_data = utils.generate_question(
+        request, session_quiz['exclude'])
+
+    if not question_data:
+        return HttpResponse('no more')
+
+    question, proverb = question_data
+    data.update(question)
+
+    session_quiz['proverb'] = proverb
+    session_quiz['start'] = datetime.now()
+    request.session.modified = True
+
+    data['number'] = session_quiz['number']
+    data['success'] = True
 
     # return a new question
     return HttpResponse(json.dumps(data),
