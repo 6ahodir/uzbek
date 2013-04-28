@@ -4,18 +4,18 @@
 {% block page_title %}Proverbs - Home{% endblock %}
 
 {% block javascript %}
-    <script src="{% static "proverbs/js/models/proverb.js" %}"></script>
-    <script src="{% static "proverbs/js/collections/proverbs.js" %}"></script>
-    <script src="{% static "proverbs/js/views/proverb.js" %}"></script>
-    <script src="{% static "proverbs/js/views/app.js" %}"></script>
-    <script src="{% static "proverbs/js/routers/router.js" %}"></script>
-    <script src="{% static "proverbs/js/app.js" %}"></script>
+    <!--<script src="{% static "proverbs/js/models/proverb.js" %}"></script>-->
+    <!--<script src="{% static "proverbs/js/collections/proverbs.js" %}"></script>-->
+    <!--<script src="{% static "proverbs/js/views/proverb.js" %}"></script>-->
+    <!--<script src="{% static "proverbs/js/views/app.js" %}"></script>-->
+    <!--<script src="{% static "proverbs/js/routers/router.js" %}"></script>-->
+    <!--<script src="{% static "proverbs/js/app.js" %}"></script>-->
 {% endblock %}
 
 {% block content %}
 <ul>
-    {% for proverb in proverbs %}
-    <li>{{ proverb.text }}</li>
+    {% for score in score_list %}
+    <li>{{ score.user.first_name|default:score.user.username }} - {{ score.score }}</li>
     {% endfor %}
 </ul>
 <br>

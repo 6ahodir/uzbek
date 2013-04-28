@@ -8,6 +8,8 @@ urlpatterns = patterns(
     url(r'^quiz/$', views.quiz, {'template_name': 'quiz.html'}, name='quiz'),
     url(r'^check-answer/$', views.check_answer, {}, name='check_answer'),
     url(r'^next-question/$', views.next_question, {}, name='next_question'),
+    url(r'^save-quiz-score/$', views.save_quiz_score, {},
+        name='save_quiz_score'),
 
     url(r'^get-facebook-permissions/$', views.get_facebook_permissions,
         {'template_name': 'get_facebook_permissions.html'},

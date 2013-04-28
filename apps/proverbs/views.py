@@ -2,7 +2,7 @@ import json
 import logging
 from uuid import uuid4
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.contrib.auth import login
@@ -57,8 +57,8 @@ def index(request, template_name):
     login(request, user)
     data['profile'] = user.userprofile
 
-    proverbs = Proverb.objects.all()
-    data['proverbs'] = proverbs
+    score_list = ScoreList.objects.filter(score__gt=0).order_by('-score')[:10]
+    data['score_list'] = score_list
 
     # todo: generate a global top score list and show on the page
     # todo: generate a top score list among user's friends
@@ -76,6 +76,8 @@ def quiz(request, template_name):
     question, proverb = utils.generate_question(request, exclude)
     data.update(question)
 
+    exclude.append(proverb.id)
+
     uuid = str(uuid4())
 
     data['uuid'] = uuid
@@ -85,11 +87,15 @@ def quiz(request, template_name):
     data['time'] = request.user.userprofile.game_time
     data['number'] = 1  # the number of the question
 
+    start = datetime.now()
+    end = start + timedelta(0, data['time'] * 60)
     # todo: set expiration
     # proverb, start time, result (initally wrong)
     request.session['quiz-%s' % uuid] = {
         'proverb': proverb,
-        'start': datetime.now(),
+        'start': start,  # start will change with each next question
+        # end won't change, used to decide whether the user's quiz time is up
+        'end': end,
         'hints': DEFAULT_HINT_COUNT,
         'time': data['time'],
         'number': data['number'],
@@ -170,9 +176,9 @@ def next_question(request):
 
     data = {}
 
-    session_quiz['exclude'].append(session_quiz['proverb'].id)
-    session_quiz['number'] += 1
-    request.session.modified = True
+    # has the quiz end time reached?
+    if datetime.now() >= session_quiz['end']:
+        return HttpResponse('expired')
 
     question_data = utils.generate_question(
         request, session_quiz['exclude'])
@@ -184,7 +190,9 @@ def next_question(request):
     data.update(question)
 
     session_quiz['proverb'] = proverb
+    session_quiz['exclude'].append(proverb.id)
     session_quiz['start'] = datetime.now()
+    session_quiz['number'] += 1
     request.session.modified = True
 
     data['number'] = session_quiz['number']
@@ -192,6 +200,66 @@ def next_question(request):
 
     # return a new question
     return HttpResponse(json.dumps(data),
+                        mimetype='application/json')
+
+
+def save_quiz_score(request):
+    """Calculates the user's final score and saves as top score.
+    Returns a list of top scorers and the user's score if not in that list
+    This is the last step of a quiz. This function must get called when
+    the time expires or there is no more questions to show.
+    """
+    if not request.is_ajax():
+        raise Http404
+
+    uuid = request.GET.get('uuid')
+    if not uuid:
+        return HttpResponse('error: uuid')
+
+    session_quiz = request.session.get('quiz-%s' % uuid)
+    if not session_quiz:
+        return HttpResponse('error: session')
+
+    # only save the score if the quiz has expired
+    if datetime.now() < session_quiz['end']:
+        return HttpResponse('not over yet')
+
+    user_score, created = ScoreList.objects.get_or_create(
+        user=request.user)
+    if session_quiz['score'] > user_score.score:
+        user_score.score = session_quiz['score']
+        user_score.save()
+
+    return _get_top_scorers(user_score)
+
+
+def _get_top_scorers(request, user_score=None):
+    """returns a list of top scorers (10) along with their rankings +
+    user_score and its ranking if not in those 10
+    """
+
+    top_score_list = ScoreList.objects.filter(
+        score__gt=0).order_by('-score')[:10]
+
+    top_scorers = []
+    for rank, top_score in enumerate(top_score_list):
+        top_scorers.append({
+            # todo: check if the user allows showing their real name
+            'name': top_score.user.username,
+            'score': top_score.score,
+            'rank': rank + 1
+        })
+
+    if user_score and user_score not in top_score_list:
+        top_scorers.append({
+            # todo: check if the user allows showing their real name
+            'name': user_score.user.username,
+            'score': user_score.score,
+            'rank': ScoreList.objects.filter(
+                score__gt=user_score.score).count() + 1
+        })
+
+    return HttpResponse(json.dumps(top_scorers),
                         mimetype='application/json')
 
 

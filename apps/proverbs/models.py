@@ -127,7 +127,7 @@ class ScoreList(models.Model):
     Scores are updated if a user's score is more than their top score.
     """
     user = models.OneToOneField(User)
-    score = models.PositiveIntegerField()
+    score = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return '%s - %d' % (self.user.username, self.score)
