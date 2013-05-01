@@ -102,7 +102,9 @@ def quiz(request, template_name):
         'time': data['time'],
         'number': data['number'],
         'score': 0,  # in the beginning the user's score is 0
-        'exclude': exclude  # showed proverb ids
+        'exclude': exclude,  # showed proverb ids
+        # save the score only if there are no more questions to show
+        'save_score': False
     }
 
     return render_to_response(
@@ -186,6 +188,8 @@ def next_question(request):
         request, session_quiz['exclude'])
 
     if not question_data:
+        session_quiz['save_score'] = True
+        request.session.modified = True
         return HttpResponse('no more')
 
     question, proverb = question_data
@@ -223,7 +227,8 @@ def save_quiz_score(request):
         return HttpResponse('error: session')
 
     # only save the score if the quiz has expired
-    if datetime.now() < session_quiz['end']:
+    # or if there are no more questions to show
+    if datetime.now() < session_quiz['end'] and not session_quiz['save_score']:
         return HttpResponse('not over yet')
 
     user_score, created = ScoreList.objects.get_or_create(

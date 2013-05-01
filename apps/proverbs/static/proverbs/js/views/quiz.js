@@ -92,7 +92,6 @@ var app = app || {};
 
 		// The DOM events specific to an item.
 		events: {
-            'click #next .check': 'checkAnswer',
             'click #next .next': 'showNextQuestion'
 		},
 
@@ -275,6 +274,11 @@ var app = app || {};
                             );
                         }
                     });
+
+                    // check answer if there are no more slots to fill
+                    if (that.answers.areAllAnswered()) {
+                        that.checkAnswer();
+                    }
                 },
                 over: function(event, ui) {
                 },
@@ -296,11 +300,9 @@ var app = app || {};
             // show the next question if answer is correct
             var that = this;
 
-            if (that.$el.find('.check').attr('disabled')) {
-                return;
+            if (event) {
+                event.preventDefault();
             }
-
-            event.preventDefault();
 
             $.ajax({
                 url: that.model.get('checkUrl'),
@@ -311,7 +313,6 @@ var app = app || {};
                     'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
                 }),
                 beforeSend: function() {
-                    that.disableButton(that.$el.find('.check'));
                     that.disableButton(that.$el.find('.next'));
                 },
                 complete: function () {
@@ -325,7 +326,6 @@ var app = app || {};
                         alert('correct');
                     } else if (response === 'wrong') {
                         alert('wrong');
-                        that.enableButton(that.$el.find('.check'));
                     }
                     console.log(response);
                 },
@@ -348,11 +348,9 @@ var app = app || {};
                     'uuid': that.model.get('uuid')
                 },
                 beforeSend: function() {
-                    that.disableButton(that.$el.find('.check'));
                     that.disableButton(that.$el.find('.next'));
                 },
                 complete: function () {
-                    that.enableButton(that.$el.find('.check'));
                     that.enableButton(that.$el.find('.next'));
                 },
                 success: function(response) {
