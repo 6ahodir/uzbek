@@ -13,8 +13,8 @@ GAME_TIME_CHOICES = ((1, '1 min'), (3, '3 mins'), (5, '5 mins'))
 # GAME_TIME_CHOICES tuple
 DEFAULT_GAME_TIME = 3
 
-# How many suggested words should we show?
-SUGGESTIONS_COUNT = 20
+# How many more suggested words (besides the correct answers) should we show?
+EXTRA_SUGGESTIONS_COUNT = 3
 
 # How many points does a user earn per correct answer?
 SCORES = {
@@ -57,7 +57,7 @@ class Proverb(models.Model):
         words = [x.lower().strip(punctuation) for x in proverb.text.split()]
         # each word will have two suggestions
         suggestion_words = SuggestionWord.objects.order_by(
-            '?')[:SUGGESTIONS_COUNT - len(words)]
+            '?')[:EXTRA_SUGGESTIONS_COUNT + len(words)]
         suggestions = [x.word for x in suggestion_words]
         # add the correct answers too
         suggestions.extend(words)
