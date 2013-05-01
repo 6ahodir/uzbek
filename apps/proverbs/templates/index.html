@@ -1,4 +1,4 @@
-{% extends "./base.html" %}
+{% extends "base.html" %}
 {% load staticfiles %}
 
 {% block page_title %}Proverbs - Home{% endblock %}
@@ -13,15 +13,26 @@
 {% endblock %}
 
 {% block content %}
+<div class="desc">
+    DESCRIPTION. Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+</div>
+
+<h3>Top scorers</h3>
 <ul>
     {% for score in score_list %}
-    <li>{{ score.user.first_name|default:score.user.username }} - {{ score.score }}</li>
+    <li>
+        <img src="{% if score.user.userprofile.show_photo %}{{ score.user.userprofile.get_photo }}{% else %}{% static "img/no-photo.gif" %}{% endif %}">
+        {% if score.user.userprofile.show_name %}
+            {{ score.user.first_name|default:"Билимдон" }}
+        {% else %}
+            Билимдон
+        {% endif %}
+        -
+        {{ score.score }}
+    </li>
     {% endfor %}
 </ul>
 <br>
-{{ fb_profile }}
-
-{{ profile }}
 
 <a href="{% url "proverbs:quiz" %}">Start</a>
 {% endblock content %}

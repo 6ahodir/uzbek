@@ -57,7 +57,9 @@ def index(request, template_name):
     login(request, user)
     data['profile'] = user.userprofile
 
-    score_list = ScoreList.objects.filter(score__gt=0).order_by('-score')[:10]
+    score_list = ScoreList.objects.filter(
+        score__gt=0, user__userprofile__publish_score=True
+    ).order_by('-score')[:10]
     data['score_list'] = score_list
 
     # todo: generate a global top score list and show on the page

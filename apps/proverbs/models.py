@@ -168,6 +168,10 @@ class UserProfile(models.Model):
             self.facebook_id = self.user.username
         super(UserProfile, self).save(*args, **kwargs)
 
+    def get_photo(self):
+        return 'http://graph.facebook.com/%s/picture?type=square' %\
+               self.facebook_id
+
 
 @receiver(models.signals.post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
