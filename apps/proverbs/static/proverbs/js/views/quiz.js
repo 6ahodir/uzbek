@@ -13,8 +13,10 @@ var app = app || {};
         },
 
         initialize: function() {
-            _.bindAll(this, 'tick');
-			//this.listenTo(this.model, 'change', this.render);
+            _.bindAll(this, 'tick', 'subtractTime', 'stop', 'pause', 'resume',
+                'updateView');
+			this.listenTo(this.model, 'change:secs', this.updateView);
+			this.listenTo(this.model, 'change:mins', this.updateView);
             this.render();
         },
 
@@ -28,7 +30,6 @@ var app = app || {};
                 secs = this.model.get('secs');
 
             this.model.set('paused', true);
-            this.$el.fadeOut();
 
             removeMins = removeMins || 0;
             removeSecs = removeSecs || 0;
@@ -52,7 +53,18 @@ var app = app || {};
             });
 
             this.model.set('paused', false);
-            this.$el.fadeIn();
+        },
+
+        stop: function() {
+            clearInterval(this.interval);
+        },
+
+        pause: function() {
+            this.model.set('pause', true);
+        },
+
+        resume: function() {
+            this.model.set('pause', false);
         },
 
         tick: function() {
@@ -66,7 +78,7 @@ var app = app || {};
             mins = this.model.get('mins');
             secs = this.model.get('secs');
             if (mins === 0 && secs === 0) {
-                clearInterval(this.interval);
+                this.stop();
                 this.trigger('time-is-up');
             } else {
                 if (secs === 0 && mins > 0) {
@@ -80,6 +92,10 @@ var app = app || {};
                     'secs': secs
                 });
             }
+        },
+        updateView: function() {
+            var mins = this.model.get('mins'),
+                secs = this.model.get('secs');
             this.$el.find('.mins').text(mins);
             this.$el.find('.secs').text((secs < 10) ? '0' + secs : secs);
         }
@@ -458,7 +474,9 @@ var app = app || {};
 
         showResultsPopup: function() {
             var that = this;
+
             // todo disable everything inside the #quiz div
+            that.timerView.stop();
             $.ajax({
                 url: that.model.get('saveScoreUrl'),
                 data: {
