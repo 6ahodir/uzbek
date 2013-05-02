@@ -60,11 +60,11 @@ var app = app || {};
         },
 
         pause: function() {
-            this.model.set('pause', true);
+            this.model.set('paused', true);
         },
 
         resume: function() {
-            this.model.set('pause', false);
+            this.model.set('paused', false);
         },
 
         tick: function() {
@@ -402,6 +402,9 @@ var app = app || {};
                             that.model.set('score', that.model.get('score') +
                                 response.score);
                         alert('correct');
+                        // pause the timer so that the user can review
+                        that.timerView.pause();
+                        console.log('pausing');
                     } else if (response === 'wrong') {
                         alert('wrong');
                     }
@@ -423,6 +426,9 @@ var app = app || {};
                 // subtract 20 secs if not slots are filled
                 that.timerView.subtractTime(0, 20);
             }
+
+            // resume the timer
+            that.timerView.resume();
 
             $.ajax({
                 url: that.model.get('nextUrl'),

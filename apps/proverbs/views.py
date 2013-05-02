@@ -88,14 +88,13 @@ def quiz(request, template_name):
     data['number'] = 1  # the number of the question
 
     start = datetime.now()
-    end = start + timedelta(0, data['time'] * 60)
+    time_left = timedelta(0, data['time'] * 60)
     # todo: set expiration
     # proverb, start time, result (initally wrong)
     request.session['quiz-%s' % uuid] = {
         'proverb': proverb,
         'start': start,  # start will change with each next question
-        # end won't change, used to decide whether the user's quiz time is up
-        'end': end,
+        'time_left': time_left,
         'hints': DEFAULT_HINT_COUNT,
         'time': data['time'],
         'number': data['number'],
@@ -148,10 +147,11 @@ def check_answer(request):
         proverb_score.correct_count += 1
         proverb_score.save()
 
+    time_passed = (datetime.now() - session_quiz['start']).seconds
+    session_quiz['time_left'] -= time_passed
+
     # calculate score
-    score = ScoreList.calculate_score(
-        (datetime.now() - session_quiz['start']).seconds
-    )
+    score = ScoreList.calculate_score(time_passed)
     session_quiz['score'] += score
 
     request.session.modified = True
@@ -179,7 +179,7 @@ def next_question(request):
     data = {}
 
     # has the quiz end time reached?
-    if datetime.now() >= session_quiz['end']:
+    if session_quiz['time_left'].seconds <= 0:
         return HttpResponse('expired')
 
     question_data = utils.generate_question(
