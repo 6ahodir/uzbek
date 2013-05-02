@@ -33,7 +33,11 @@ var app = app || {};
 
             mins = this.model.get('mins');
             secs = this.model.get('secs');
-            if (mins >= 0 && secs >= 0) {
+            console.log(mins, secs);
+            if (mins === 0 && secs === 0) {
+                clearInterval(this.interval);
+                this.trigger('time-is-up');
+            } else {
                 if (secs === 0 && mins > 0) {
                     mins -= 1;
                     secs = 59;
@@ -46,8 +50,6 @@ var app = app || {};
                     'mins': mins,
                     'secs': secs
                 });
-            } else {
-                clearInterval(this.interval);
             }
         }
     });
@@ -146,6 +148,7 @@ var app = app || {};
 
             this.timer = new app.Timer({}, {'time': this.model.get('time')});
             this.timerView = new app.TimerView({model: this.timer});
+            this.listenTo(this.timerView, 'time-is-up', this.showResultsPopup);
 
             this.showQuestion();
 
@@ -419,6 +422,7 @@ var app = app || {};
 
         showResultsPopup: function() {
             var that = this;
+            // todo disable everything inside the #quiz div
             $.ajax({
                 url: that.model.get('saveScoreUrl'),
                 data: {
