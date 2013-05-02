@@ -23,6 +23,38 @@ var app = app || {};
             this.interval = setInterval(this.tick, 1000);
         },
 
+        subtractTime: function(removeMins, removeSecs) {
+            var mins = this.model.get('mins'),
+                secs = this.model.get('secs');
+
+            this.model.set('paused', true);
+            this.$el.fadeOut();
+
+            removeMins = removeMins || 0;
+            removeSecs = removeSecs || 0;
+
+            mins -= removeMins;
+            secs -= removeSecs;
+
+            if (secs <= 0) {
+                mins -= 1;
+            }
+            if (secs < 0) {
+                secs += 60;
+            }
+            if (mins < 0) {
+                secs = 0;
+                mins = 0;
+            }
+            this.model.set({
+                mins: mins,
+                secs: secs
+            });
+
+            this.model.set('paused', false);
+            this.$el.fadeIn();
+        },
+
         tick: function() {
             var mins,
                 secs;
@@ -33,7 +65,6 @@ var app = app || {};
 
             mins = this.model.get('mins');
             secs = this.model.get('secs');
-            console.log(mins, secs);
             if (mins === 0 && secs === 0) {
                 clearInterval(this.interval);
                 this.trigger('time-is-up');
@@ -44,13 +75,13 @@ var app = app || {};
                 } else if (!(secs === 0 && mins === 0)) {
                     secs -= 1;
                 }
-                this.$el.find('.mins').text(mins);
-                this.$el.find('.secs').text((secs < 10) ? '0' + secs : secs);
                 this.model.set({
                     'mins': mins,
                     'secs': secs
                 });
             }
+            this.$el.find('.mins').text(mins);
+            this.$el.find('.secs').text((secs < 10) ? '0' + secs : secs);
         }
     });
     
@@ -372,6 +403,11 @@ var app = app || {};
 
             event.preventDefault();
 
+            if (!that.answers.areAllAnswered()) {
+                // subtract 20 secs if not slots are filled
+                that.timerView.subtractTime(0, 20);
+            }
+
             $.ajax({
                 url: that.model.get('nextUrl'),
                 type: 'GET',
@@ -396,7 +432,7 @@ var app = app || {};
                         } else {
                         
                         }
-                    } else if (response === 'no more') {
+                    } else if (response === 'no more' || response === 'expired') {
                         // todo: show the results popup
                         that.showResultsPopup();
                     }
