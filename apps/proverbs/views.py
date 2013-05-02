@@ -147,11 +147,11 @@ def check_answer(request):
         proverb_score.correct_count += 1
         proverb_score.save()
 
-    time_passed = (datetime.now() - session_quiz['start']).seconds
+    time_passed = datetime.now() - session_quiz['start']
     session_quiz['time_left'] -= time_passed
 
     # calculate score
-    score = ScoreList.calculate_score(time_passed)
+    score = ScoreList.calculate_score(time_passed.seconds)
     session_quiz['score'] += score
 
     request.session.modified = True
