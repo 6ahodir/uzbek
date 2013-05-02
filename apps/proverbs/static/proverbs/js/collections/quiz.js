@@ -32,4 +32,8 @@ var app = app || {};
         }
 	});
 
+	app.TopScorers = Backbone.Collection.extend({
+		model: app.TopScorer
+	});
+
 })();

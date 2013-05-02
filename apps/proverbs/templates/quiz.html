@@ -34,7 +34,8 @@
                 uuid: '{{ uuid }}',
                 number: {{ number }},
                 checkUrl: '{{ check_url }}',
-                nextUrl: '{{ next_url }}'
+                nextUrl: '{{ next_url }}',
+                saveScoreUrl: '{{ save_score_url }}'
             };
 
             app.quiz = new app.Quiz(app.data.quiz);
@@ -46,6 +47,12 @@
 {% block content %}
     {% csrf_token %}
     <div id="quiz">
+    </div>
+
+    <div id="top-scorers-popup" class="popup">
+        <h3>Top Scorers</h3>
+        <ul id="top-scorers">
+        </ul>
     </div>
 
     <script id="quiz-template" type="text/html">
@@ -93,4 +100,11 @@
         <span class="secs"><%= (secs < 10) ? '0' + secs : secs %></span>
     </script>
 
+    <script id="top-scorer-template" type="text/html">
+        <%= rank %>
+        <img src="<%= photo_url %>">
+        <%= name %>
+        -
+        <%= score %>
+    </script>
 {% endblock content %}

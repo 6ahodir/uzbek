@@ -2,6 +2,7 @@ from math import ceil
 from random import randrange, shuffle
 from string import punctuation
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.dispatch import receiver
@@ -169,8 +170,19 @@ class UserProfile(models.Model):
         super(UserProfile, self).save(*args, **kwargs)
 
     def get_photo(self):
-        return 'http://graph.facebook.com/%s/picture?type=square' %\
-               self.facebook_id
+        if self.show_photo:
+            photo_url = 'http://graph.facebook.com/%s/picture?type=square' %\
+                        self.facebook_id
+        else:
+            photo_url = '%s/img/no-photo.gif' % settings.STATIC_URL
+        return photo_url
+
+    def get_name(self):
+        if self.show_name:
+            name = self.user.first_name if self.user.first_name else 'Билимдон'
+        else:
+            name = 'Билимдон'
+        return name
 
 
 @receiver(models.signals.post_save, sender=User)

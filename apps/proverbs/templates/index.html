@@ -19,16 +19,13 @@
 
 <h3>Top scorers</h3>
 <ul>
-    {% for score in score_list %}
-    <li>
-        <img src="{% if score.user.userprofile.show_photo %}{{ score.user.userprofile.get_photo }}{% else %}{% static "img/no-photo.gif" %}{% endif %}">
-        {% if score.user.userprofile.show_name %}
-            {{ score.user.first_name|default:"Билимдон" }}
-        {% else %}
-            Билимдон
-        {% endif %}
+    {% for scorer in top_scorers %}
+    <li {% if scorer.current_user %}class="current-user"{% endif %}>
+        {{ scorer.rank }}
+        <img src="{{ scorer.photo_url }}">
+        {{ scorer.name }}
         -
-        {{ score.score }}
+        {{ scorer.score }}
     </li>
     {% endfor %}
 </ul>

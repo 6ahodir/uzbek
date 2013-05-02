@@ -57,10 +57,7 @@ def index(request, template_name):
     login(request, user)
     data['profile'] = user.userprofile
 
-    score_list = ScoreList.objects.filter(
-        score__gt=0, user__userprofile__publish_score=True
-    ).order_by('-score')[:10]
-    data['score_list'] = score_list
+    data['top_scorers'] = _get_top_scorers(count=10)
 
     # todo: generate a global top score list and show on the page
     # todo: generate a top score list among user's friends
@@ -85,6 +82,7 @@ def quiz(request, template_name):
     data['uuid'] = uuid
     data['check_url'] = reverse('proverbs:check_answer')
     data['next_url'] = reverse('proverbs:next_question')
+    data['save_score_url'] = reverse('proverbs:save_quiz_score')
     data['hints'] = DEFAULT_HINT_COUNT
     data['time'] = request.user.userprofile.game_time
     data['number'] = 1  # the number of the question
@@ -229,7 +227,7 @@ def save_quiz_score(request):
     # only save the score if the quiz has expired
     # or if there are no more questions to show
     if datetime.now() < session_quiz['end'] and not session_quiz['save_score']:
-        return HttpResponse('not over yet')
+        return HttpResponse('error: not finished yet')
 
     user_score, created = ScoreList.objects.get_or_create(
         user=request.user)
@@ -237,37 +235,44 @@ def save_quiz_score(request):
         user_score.score = session_quiz['score']
         user_score.save()
 
-    return _get_top_scorers(user_score)
+    top_scorers = _get_top_scorers(user_score)
+    return HttpResponse(json.dumps({
+        'top_scorers': top_scorers,
+        'success': True
+    }), mimetype='application/json')
 
 
-def _get_top_scorers(request, user_score=None):
+def _get_top_scorers(user_score=None, count=10):
     """returns a list of top scorers (10) along with their rankings +
     user_score and its ranking if not in those 10
     """
 
     top_score_list = ScoreList.objects.filter(
-        score__gt=0).order_by('-score')[:10]
+        score__gt=0, user__userprofile__publish_score=True
+    ).order_by('-score')[:count]
 
     top_scorers = []
     for rank, top_score in enumerate(top_score_list):
         top_scorers.append({
-            # todo: check if the user allows showing their real name
-            'name': top_score.user.username,
+            'name': top_score.user.userprofile.get_name(),
+            'photo_url': top_score.user.userprofile.get_photo(),
             'score': top_score.score,
-            'rank': rank + 1
+            'rank': rank + 1,
+            'current_user': True if user_score and
+            user_score.user == top_score.user else False
         })
 
     if user_score and user_score not in top_score_list:
         top_scorers.append({
-            # todo: check if the user allows showing their real name
-            'name': user_score.user.username,
+            'id': user_score.user.id,
+            'name': user_score.user.userprofile.get_name(),
+            'photo_url': user_score.user.userprofile.get_photo(),
             'score': user_score.score,
             'rank': ScoreList.objects.filter(
-                score__gt=user_score.score).count() + 1
+                score__gt=user_score.score).count() + 1,
+            'current_user': True
         })
-
-    return HttpResponse(json.dumps(top_scorers),
-                        mimetype='application/json')
+    return top_scorers
 
 
 def get_facebook_permissions(request, template_name):

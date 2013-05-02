@@ -41,6 +41,8 @@ var app = app || {};
         }
     });
 
+    app.TopScorer = Backbone.Model.extend({});
+
 	// Quiz Model
 	// ----------
 

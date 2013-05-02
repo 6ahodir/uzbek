@@ -82,6 +82,24 @@ var app = app || {};
         }
     });
 
+    // Top Scorer View
+    // ------------
+    app.TopScorerView = Backbone.View.extend({
+        tagName: 'li',
+        template: _.template($('#top-scorer-template').html()),
+        events: {},
+        initialize: function() {
+        },
+        render: function() {
+			this.$el.html(this.template(this.model.toJSON()));
+            if (this.model.get('current_user') === true) {
+                this.$el.addClass('current-user');
+            }
+            return this;
+        }
+    });
+
+
 	// Quiz View
 	// --------------
 
@@ -99,16 +117,18 @@ var app = app || {};
             _.bindAll(this, 'makeSuggestionsDraggable', 'makeAnswersDroppable',
                     'checkAnswer', 'showNextQuestion', 'showQuestion',
                     'addAnswers', 'addSuggestions', 'disableButton',
-                    'enableButton', 'updateScore');
+                    'enableButton', 'updateScore', 'addTopScorers');
 
 
             this.answers = new app.Answers();
             this.suggestions = new app.Suggestions();
+            this.topScorers = new app.TopScorers();
 
 			//this.listenTo(this.model, 'change:question', this.model.setAnswer);
             this.listenTo(this.model, 'change:number', this.showQuestion);
             this.listenTo(this.model, 'change:score', this.updateScore);
             this.listenTo(this.answers, 'reset', this.addAnswers);
+            this.listenTo(this.topScorers, 'reset', this.addTopScorers);
             this.listenTo(this.suggestions, 'reset', this.addSuggestions);
             this.render();
 		},
@@ -178,6 +198,14 @@ var app = app || {};
 			this.suggestions.each(function (suggestion) {
                 var view = new app.SuggestionView({model: suggestion});
                 this.$el.find('#suggestions').append(view.render().el);
+            }, this);
+        },
+
+        addTopScorers: function () {
+            $('#top-scorers').html('');
+			this.topScorers.each(function (scorer) {
+                var view = new app.TopScorerView({model: scorer});
+                $('#top-scorers').append(view.render().el);
             }, this);
         },
 
@@ -367,6 +395,7 @@ var app = app || {};
                         }
                     } else if (response === 'no more') {
                         // todo: show the results popup
+                        that.showResultsPopup();
                     }
                     console.log(response);
                 },
@@ -386,6 +415,32 @@ var app = app || {};
 
         updateScore: function() {
             this.$el.find('#score').text(this.model.get('score'));
+        },
+
+        showResultsPopup: function() {
+            var that = this;
+            $.ajax({
+                url: that.model.get('saveScoreUrl'),
+                data: {
+                    'uuid': that.model.get('uuid')
+                },
+                beforeSend: function() {
+                    // todo: display a loading something
+                },
+                success: function(response) {
+                    if (typeof response.success !== 'undefined' && response.success) {
+                        that.topScorers.reset(response.top_scorers);
+                        that.$el.find('#top-scorers-popup').show();
+                    } else {
+                        alert(response);
+                        // todo: show the results popup
+                    }
+                    console.log(response);
+                },
+                error: function() {
+                
+                }
+            });
         }
 	});
 })(jQuery);
