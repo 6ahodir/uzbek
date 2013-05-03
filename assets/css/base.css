@@ -1,13 +1,73 @@
-body > .content {
-    margin: 0 auto;
-    padding: 20px;
-    width: 600px;
-}
-
 * {
     -moz-user-select: -moz-none;
     -khtml-user-select: none;
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+
+body > .content {
+    margin: 0 auto;
+    padding: 20px;
+    width: 600px;
+}
+
+.clear {
+    clear: both;
+}
+
+.button {
+    background-color: transparent;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+    border: 1px solid #dcdcdc;
+    display: inline-block;
+    color: #087BCE;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 6px 24px;
+    text-decoration: none;
+    text-shadow: 1px 1px 0px #ffffff;
+}
+.button:hover {
+    background-color: #087BCE;;
+    color: #fff;
+    text-shadow: 1px 1px 0px #087BCE;
+}
+.button:active {
+    border-color: #087BCE;
+    position: relative;
+    top: 1px;
+}
+
+.popup-holder {
+    display: none;
+}
+
+.popup-holder .cover {
+    background-color: #FFF;
+    height: 100%;
+    left: 0;
+    opacity: 0.85;
+    position: fixed;
+    top: 0;
+    width: 100%;
+}
+
+.popup-holder .popup {
+    background-color: #f5f5f5;
+    border: 6px solid #e3e2e2;
+    border-radius: 6px;
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.5);
+    left: 50%;
+    margin-left: -300px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 10px;
+    position: absolute;
+    text-align: left;
+    top: 100px;
+    width: 600px;
+    z-index: 1001;
 }

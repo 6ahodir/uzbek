@@ -49,17 +49,23 @@
     <div id="quiz">
     </div>
 
-    <div id="top-scorers-popup" class="popup">
-        <h3>Top Scorers</h3>
-        <ul id="top-scorers">
-        </ul>
+    <div id="top-scorers-popup" class="popup-holder">
+        <div class="cover"></div>
+        <div class="popup">
+            <div id="top-scorers-title">Аълочилар рўйхати</div>
+            <ul id="top-scorers">
+            </ul>
+            <div class="replay">
+                <a href="{% url 'proverbs:quiz' %}" class="button">Яна ўйнаш</a>
+            </div>
+        </div>
     </div>
 
     <script id="quiz-template" type="text/html">
-        <div id="timer">
+        <span id="timer" title="Қолган вақт">
             {# a moving timer #}
             <%= time %>
-        </div>
+        </span>
         <div id="desc">
             <%= description %>
         </div>
@@ -68,18 +74,19 @@
         </ul>
         <ul id="suggestions">
         </ul>
-        <div id="score">
-            {# initially 0, but increases with each correct answer #}
-            <%= score %>
-        </div>
-        <div id="hints">
+        <div id="hints" style="display: none;">
             {# total number of hints #}
             <%= hints %>
         </div>
-        <div id="next">
+        <div id="score-next">
+            <span id="score" title="Тўпланган балл">
+                {# initially 0, but increases with each correct answer #}
+                <%= score %>
+            </span>
             {# move to the next question if correct, or skip if not complete or wrong #}
-            <a href="#" class="next">Next</a>
+            <a href="#" class="next button"><span>Кейингиси</span> &rarr;</a>
         </div>
+        <div class="clear"></div>
     </script>
 
     <script id="answer-template" type="text/html">
@@ -101,10 +108,15 @@
     </script>
 
     <script id="top-scorer-template" type="text/html">
-        <%= rank %>
-        <img src="<%= photo_url %>">
-        <%= name %>
-        -
-        <%= score %>
+        <span class="rank" title="Ўрин">
+            <%= rank %>
+        </span>
+        <span class="user">
+            <img src="<%= photo_url %>" width=50 height=50 alt="<%= name %>" title="<%= name %>">
+            <%= name %>
+        </span>
+        <span class="score" title="Тўплаган балли">
+            <%= score %> балл
+        </span>
     </script>
 {% endblock content %}

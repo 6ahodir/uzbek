@@ -159,7 +159,7 @@ var app = app || {};
 
 		// The DOM events specific to an item.
 		events: {
-            'click #next .next': 'showNextQuestion'
+            'click a.next': 'showNextQuestion'
 		},
 
 		initialize: function() {
@@ -494,7 +494,9 @@ var app = app || {};
                 success: function(response) {
                     if (typeof response.success !== 'undefined' && response.success) {
                         that.topScorers.reset(response.top_scorers);
-                        that.$el.find('#top-scorers-popup').show();
+                        $('#top-scorers-popup').show();
+                        // clear the quiz
+                        that.$el.html('');
                     } else {
                         alert(response);
                         // todo: show the results popup
