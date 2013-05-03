@@ -1,0 +1,101 @@
+#logo {
+    text-align: center;
+    text-shadow: 1px 1px 2px #E31508
+}
+#logo span:first-child {
+    color: #087BCE
+}
+#logo span:last-child {
+    color: #4A9400
+}
+.desc {
+    text-align: center;
+}
+.desc:first-letter {
+    color: #E31508;
+    font-size: 120%;
+    font-style: italic;
+}
+.start {
+    padding: 50px;
+    text-align: center;
+}
+.button {
+    background-color: transparent;
+    -moz-border-radius: 6px;
+    -webkit-border-radius: 6px;
+    border-radius: 6px;
+    border: 1px solid #dcdcdc;
+    display: inline-block;
+    color: #087BCE;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 6px 24px;
+    text-decoration: none;
+    text-shadow: 1px 1px 0px #ffffff;
+}
+.button:hover {
+    background-color: #087BCE;;
+    color: #fff;
+    text-shadow: 1px 1px 0px #087BCE;
+}
+.button:active {
+    border-color: #087BCE;
+    position: relative;
+    top: 1px;
+}
+#top-scorers-title {
+    color: #E31508;
+    font-size: 130%;
+    padding: 50px 0 20px;
+    text-align: center;
+    text-shadow: 1px 1px 2px #087BCE;
+}
+#top-scorers {
+    list-style: none;
+    margin: 0 auto;
+    padding: 0;
+    width: 70%;
+}
+#top-scorers li {
+    border-bottom: 1px dashed #ccc;
+    padding: 5px 0;
+}
+#top-scorers li.current-user {
+    font-weight: bold;
+}
+#top-scorers span {
+    display: inline-block;
+    overflow: hidden;
+}
+#top-scorers .rank {
+    padding-right: 5%;
+    text-align: center;
+    width: 5%;
+}
+#top-scorers li:first-child .rank {
+    color: #087BCE;
+    font-size: 150%;
+    font-weight: bold;
+}
+#top-scorers li:nth-child(2) .rank {
+    color: #E31508;
+    font-size: 130%;
+    font-weight: bold;
+}
+#top-scorers li:nth-child(3) .rank {
+    color: #4A9400;
+    font-size: 110%;
+    font-weight: bold;
+}
+#top-scorers .user {
+    padding-right: 5%;
+    width: 55%;
+}
+#top-scorers .user img {
+    padding-right: 20px;
+}
+#top-scorers .score {
+    width: 25%;
+}
+
