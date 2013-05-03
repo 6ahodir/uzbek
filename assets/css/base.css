@@ -16,6 +16,28 @@ body > .content {
     clear: both;
 }
 
+#logo {
+    display: block;
+    font-size: 2em;
+    margin-bottom: 1em;
+    text-align: center;
+    text-decoration: none;
+    text-shadow: 1px 1px 2px #E31508
+}
+#logo.small {
+    display: inline-block;
+    font-size: 1.2em;
+    margin-bottom: 0.2em;
+    text-align: left;
+}
+
+#logo span:first-child {
+    color: #087BCE
+}
+#logo span:last-child {
+    color: #4A9400
+}
+
 .button {
     background-color: transparent;
     -moz-border-radius: 6px;
