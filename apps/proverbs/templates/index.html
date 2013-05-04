@@ -17,12 +17,64 @@
 {% endblock %}
 
 {% block content %}
+<div id="fb-root"></div>
+<script>
+    window.fbAsyncInit = function() {
+        FB.init({
+            appId      : '{{ facebook.APP_ID }}',
+            channelUrl : window.location.orgin + '{% url 'proverbs:facebook_channel' %}',
+            status     : true,
+            cookie     : true,
+            xfbml      : true
+        });
+
+        FB.getLoginStatus(function(response) {
+            if (response.status === 'connected') {
+                // connected
+            } else if (response.status === 'not_authorized') {
+                // not_authorized
+            } else {
+                // not_logged_in
+            }
+        });
+    };
+
+    function login() {
+        FB.login(function(response) {
+            if (response.status === 'connected') {
+                var data = (window.location.search !== '') ? '&' : '?';
+                data += 'access_token=' + response.authResponse.accessToken;
+                data += '&expires=' + response.authResponse.expiresIn.toString();
+                data += '&uid=' + response.authResponse.userID;
+                //console.log(data, response);
+                window.location.href = window.location.href + data; 
+            } else {
+                // cancelled
+            }
+        }, {scope: 'email,publish_stream'});
+        return false;
+    }
+
+    // Load the SDK Asynchronously
+    (function(d){
+        var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+        if (d.getElementById(id)) {return;}
+        js = d.createElement('script'); js.id = id; js.async = true;
+        js.src = "//connect.facebook.net/en_US/all.js";
+        ref.parentNode.insertBefore(js, ref);
+    }(document));
+</script>
+
 <a href="{% url 'proverbs:index' %}" id="logo" title="Ушбу саҳифани бошқадан очиш"><span>Ўзбек</span> <span>Мақоллари</span></a>
 <div class="desc">
     Ўзбек мақолларини қанчалик яхши биласиз? "Бошлаш" тугмасини босинг ва ўз билимингизни синаб кўринг.
 </div>
 <div class="start">
-    <a href="{% url "proverbs:quiz" %}" class="button">Бошлаш</a>
+    <a href="{% url "proverbs:quiz" %}" class="button" {%if not fb_profile %}onclick="login(); return false;"{% endif %}>Бошлаш</a>
+    {% if not fb_profile %}
+        <br>
+        <small>Ушбу ўйин тўғри ишлаши учун сиздан ўйинни бошлашингиздан олдин рухсат сўралади.</small>
+    {% endif %}
 </div>
 
 <div id="top-scorers-title">Аълочилар рўйхати</div>
@@ -43,6 +95,9 @@
     {% endfor %}
 </ul>
 <br>
+
+
+
 
 {% endblock content %}
 

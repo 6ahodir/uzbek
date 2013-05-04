@@ -11,9 +11,9 @@ urlpatterns = patterns(
     url(r'^save-quiz-score/$', views.save_quiz_score, {},
         name='save_quiz_score'),
 
-    url(r'^get-facebook-permissions/$', views.get_facebook_permissions,
-        {'template_name': 'get_facebook_permissions.html'},
-        name='get_facebook_permissions'),
+    url(r'^account-disabled/$', views.account_disabled,
+        {'template_name': 'account_disabled.html'}, name='save_quiz_score'),
+
     url(r'^facebook-channel/$', views.facebook_channel,
         {'template_name': 'facebook_channel.html'},
         name='facebook_channel'),

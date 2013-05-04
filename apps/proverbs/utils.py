@@ -79,34 +79,39 @@ def check_answers(text, answers):
     return result
 
 
-def get_facebook_graph(signed_request):
+def get_facebook_graph(signed_request=None, user_data=None):
     """Get facebook graph object from the signed_request"""
+    if user_data:
+        facebook = fb.Facebook({}, settings.FACEBOOK['APP_ID'],
+            settings.FACEBOOK['APP_SECRET'])
+        sig = facebook.generate_sig(user_data, facebook.app_secret)
+        user_data['sig'] = sig
+        facebook.session = user_data
+    elif signed_request:
+        facebook = fb.Facebook({'signed_request': signed_request},
+            settings.FACEBOOK['APP_ID'], settings.FACEBOOK['APP_SECRET'])
+
     try:
-        facebook = fb.Facebook(
-            {'signed_request': signed_request},
-            settings.FACEBOOK['APP_ID'],
-            settings.FACEBOOK['APP_SECRET']
-        )
-        #session = facebook.getSession()
         graph = facebook.getGraph()
     except Exception as e:
         logger.error(e, exc_info=exc_info())
-        print(e)
         graph = None
 
     return graph
 
 
-def get_facebook_profile(signed_request):
+def get_facebook_profile(signed_request=None, graph=None):
     """Get the user's profile from the signed_request"""
-    graph = get_facebook_graph(signed_request)
+
+    if signed_request:
+        graph = get_facebook_graph(signed_request)
 
     if not graph:
         return None
 
     try:
         profile = graph.get_object("me")
-    except fb.GraphAPIError:
+    except:
         profile = None
 
     return profile
